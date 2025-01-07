@@ -6,6 +6,9 @@ import java.io.BufferedInputStream;
 
 import javax.sound.midi.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 enum Instrument {
   GrandPiano(0), ElectricPiano(4), Guitar(25), Xylophone(13), Violin(40);
 
@@ -19,6 +22,53 @@ enum Instrument {
 
 class MidiPlayer {
   private Sequencer sequencer;
+  private ArrayList<UpcomingNote> notes;
+  private ArrayList<ShortMessage> instrumentChanges;
+
+  MidiPlayer() {
+    instrumentChanges = new ArrayList<ShortMessage>();
+    notes = new ArrayList<UpcomingNote>();
+  }
+
+  private void scanSequence(Sequence sequence) {
+    // Map the key (ex: middle C) to its timestamp (in midi ticks)
+    HashMap<Integer, Long> noteEvents = new HashMap<Integer, Long>();
+
+    for (Track track : sequence.getTracks()) {
+      for (int i = 0; i < track.size(); i++) {
+        MidiEvent event = track.get(i);
+        long timestamp = event.getTick();
+
+        MidiMessage message = event.getMessage();
+        if (!(message instanceof ShortMessage)) continue;
+        ShortMessage sm = (ShortMessage) message;
+
+        // The PROGRAM_CHANGE event changes the isntrument used
+        // We'll store references to those events so that we can
+        // edit them when changing instruments
+        if (sm.getCommand() == ShortMessage.PROGRAM_CHANGE) {
+          instrumentChanges.add(sm); 
+        }
+
+        // Get the notes that will be played
+        int key = sm.getData1();
+        int velocity = sm.getData2();
+        boolean on = sm.getCommand() == ShortMessage.NOTE_ON;
+
+        if (on) {
+          // Store when the note is turned on
+          noteEvents.put(key, timestamp);
+        } else if ((on && velocity == 0) || sm.getCommand() == ShortMessage.NOTE_OFF) {
+          // Add a new upcoming note when the note is turned off
+          long whenTurnedOn = noteEvents.get(key);
+          long duration = timestamp - whenTurnedOn;
+          UpcomingNote note = new UpcomingNote(key, whenTurnedOn, duration);
+          notes.add(note);
+          noteEvents.remove(key);
+        }
+      }
+    }
+  }
 
   // Load the midi file. Return a string containing the error
   // message on error, and null otherwise
@@ -29,11 +79,12 @@ class MidiPlayer {
 
       InputStream stream = new BufferedInputStream(new FileInputStream(new File(path)));
       Sequence sequence = MidiSystem.getSequence(stream);
+
+      int ticksPerQuarterNote = sequence.getResolution();
+      println("Ticks per quarter note", ticksPerQuarterNote);
+
       sequencer.setSequence(sequence);
-
-      Synthesizer synthesizer = MidiSystem.getSynthesizer();
-      channels = synthesizer.getChannels();
-
+      scanSequence(sequence);
     } catch (Exception exception) {
       return exception.getMessage();
     }
@@ -74,5 +125,9 @@ class MidiPlayer {
 
   float getDuration() {
     return sequencer.getMicrosecondLength() / 1000000; // In seconds
+  }
+  
+  ArrayList<UpcomingNote> getNotes() {
+    return notes; 
   }
 }
