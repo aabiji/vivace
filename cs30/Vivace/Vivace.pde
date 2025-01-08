@@ -1,7 +1,7 @@
 
 MidiPlayer player;
 ArrayList<UpcomingNote> notes;
-ArrayList<Note> piano;
+ArrayList<KeyboardNote> piano;
 
 void setup() {
   size(1000, 600);
@@ -14,13 +14,20 @@ void setup() {
   if (error != null) {
     println("ERROR", error);
   }
-
   notes = player.getNotes();
 
-  piano = new ArrayList<Note>();
+  // Create the piano keyboard, adding all the white keys first,
+  // then the black keys. This way, the black keys are drawn on top of the white keys
+  piano = new ArrayList<KeyboardNote>();
+  ArrayList<KeyboardNote> blackKeys = new ArrayList<KeyboardNote>();
   for (int i = 0; i < 128; i++) {
-    piano.add(new Note(i));
+    KeyboardNote n = new KeyboardNote(i);
+    if (n.isBlackKey)
+      blackKeys.add(n);
+    else
+      piano.add(n);
   }
+  piano.addAll(blackKeys);
 }
 
 void keyReleased() {
@@ -31,10 +38,12 @@ void keyReleased() {
 void draw() {
   background(20);
 
-  for (Note note : piano) {
+  for (KeyboardNote note : piano) {
     note.draw();
   }
 
-  UpcomingNote upcoming = notes.get(0);
-  upcoming.draw();
+  // Draw the first ten for now
+  for (int i = 0; i < 10; i++) {
+    notes.get(i).draw();
+  }
 }
