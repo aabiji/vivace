@@ -10,14 +10,6 @@ void setup() {
   if (error != null) {
     println("ERROR", error);
   }
-
-  // FIXME: I think this is wrong but I can't prove it yet...
-  println("Notes: ");
-  ArrayList<UpcomingNote> notes = player.getNotes();
-  for (int i = 0; i < 10; i++) {
-    UpcomingNote n = notes.get(i);
-    println(n.value, n.startTimestamp, n.duration);
-  }
 }
 
 void keyReleased() {

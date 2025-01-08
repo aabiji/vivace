@@ -4,7 +4,7 @@ class Note {
   int value;
   PVector size;
   PVector position;
-  
+
   Note() {
     value = 0;
     size = new PVector(15, 30);
@@ -21,10 +21,10 @@ class Note {
 
 class UpcomingNote extends Note {
   long startTimestamp;
-  long duration;
+  float duration;
   int fallSpeed;
 
-  UpcomingNote(int value, long start, long duration) {
+  UpcomingNote(int value, long start, float duration) {
     super();
     fallSpeed = 0;
     startTimestamp = start;
@@ -33,6 +33,6 @@ class UpcomingNote extends Note {
   }
 
   void update() {
-    position.y -= fallSpeed; // TODO: consider delta time 
+    position.y -= fallSpeed; // TODO: consider delta time
   }
 }

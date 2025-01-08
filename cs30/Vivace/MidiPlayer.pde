@@ -8,6 +8,7 @@ import javax.sound.midi.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Stack;
 
 enum Instrument {
   GrandPiano(0), ElectricPiano(4), Guitar(25), Xylophone(13), Violin(40);
@@ -24,15 +25,26 @@ class MidiPlayer {
   private Sequencer sequencer;
   private ArrayList<UpcomingNote> notes;
   private ArrayList<ShortMessage> instrumentChanges;
+  private int ticksPerQuarterNote;
 
   MidiPlayer() {
     instrumentChanges = new ArrayList<ShortMessage>();
     notes = new ArrayList<UpcomingNote>();
+    ticksPerQuarterNote = 0;
   }
 
   private void scanSequence(Sequence sequence) {
-    // Map the key (ex: middle C) to its timestamp (in midi ticks)
-    HashMap<Integer, Long> noteEvents = new HashMap<Integer, Long>();
+    // Map the key (ex: middle C) to a list of potential
+    // timestamps (in midi ticks). The reason why we're using a stack,
+    // and not just a long, is that there's always the possibility
+    // of having a note that's being already played, being pressed
+    // down again. This isn't particularly uncommon in music.
+    // Here: https://www.sheetmusicnow.com/products/cant-take-my-eyes-off-of-you-p119764
+    // in the 3rd measure is an example. You have a chord being held down as one voice,
+    // and a sequence comprised of mostly eight notes being played as another,
+    // and one of the notes (G) in that sequence is being played
+    // while G is already being played in the chord
+    HashMap<Integer, Stack<Long>> noteEvents = new HashMap<Integer, Stack<Long>>();
 
     for (Track track : sequence.getTracks()) {
       for (int i = 0; i < track.size(); i++) {
@@ -47,7 +59,7 @@ class MidiPlayer {
         // We'll store references to those events so that we can
         // edit them when changing instruments
         if (sm.getCommand() == ShortMessage.PROGRAM_CHANGE) {
-          instrumentChanges.add(sm); 
+          instrumentChanges.add(sm);
         }
 
         // Get the notes that will be played
@@ -56,15 +68,27 @@ class MidiPlayer {
         boolean on = sm.getCommand() == ShortMessage.NOTE_ON;
 
         if (on) {
-          // Store when the note is turned on
-          noteEvents.put(key, timestamp);
-        } else if ((on && velocity == 0) || sm.getCommand() == ShortMessage.NOTE_OFF) {
+          // Keep track of when the note is turned on
+          if (noteEvents.get(key) != null) {
+            noteEvents.get(key).push(timestamp);
+            return;
+          }
+
+          Stack<Long> stack = new Stack<Long>();
+          stack.push(timestamp);
+          noteEvents.put(key, stack);
+        } else if ((on && velocity == 0) || (sm.getCommand() == ShortMessage.NOTE_OFF)) {
           // Add a new upcoming note when the note is turned off
-          long whenTurnedOn = noteEvents.get(key);
-          long duration = timestamp - whenTurnedOn;
+
+          // Using the quarter note as basis we get the
+          // note's actual value (quarter note = 1, eight note = 0.5, etc)
+          long whenTurnedOn = noteEvents.get(key).pop();
+          float duration = (float)(timestamp - whenTurnedOn) / (float)ticksPerQuarterNote;
+
           UpcomingNote note = new UpcomingNote(key, whenTurnedOn, duration);
           notes.add(note);
-          noteEvents.remove(key);
+          if (noteEvents.get(key).empty())
+            noteEvents.remove(key);
         }
       }
     }
@@ -79,11 +103,9 @@ class MidiPlayer {
 
       InputStream stream = new BufferedInputStream(new FileInputStream(new File(path)));
       Sequence sequence = MidiSystem.getSequence(stream);
-
-      int ticksPerQuarterNote = sequence.getResolution();
-      println("Ticks per quarter note", ticksPerQuarterNote);
-
       sequencer.setSequence(sequence);
+
+      ticksPerQuarterNote = sequence.getResolution();
       scanSequence(sequence);
     } catch (Exception exception) {
       return exception.getMessage();
@@ -126,8 +148,8 @@ class MidiPlayer {
   float getDuration() {
     return sequencer.getMicrosecondLength() / 1000000; // In seconds
   }
-  
+
   ArrayList<UpcomingNote> getNotes() {
-    return notes; 
+    return notes;
   }
 }
