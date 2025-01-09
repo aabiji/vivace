@@ -1,12 +1,12 @@
 
 MidiPlayer player;
 ArrayList<UpcomingNote> notes;
-ArrayList<KeyboardNote> piano;
+ArrayList<KeyboardNote> keyboard;
 
 void setup() {
   size(1000, 600);
 
-  String piece = "fantaisie_impromptu.mid";
+  String piece = "un_sospiro.mid";
   String path = String.format("%s/music/%s", sketchPath(), piece);
 
   player = new MidiPlayer();
@@ -14,20 +14,16 @@ void setup() {
   if (error != null) {
     println("ERROR", error);
   }
-  notes = player.getNotes();
 
-  // Create the piano keyboard, adding all the white keys first,
-  // then the black keys. This way, the black keys are drawn on top of the white keys
-  piano = new ArrayList<KeyboardNote>();
-  ArrayList<KeyboardNote> blackKeys = new ArrayList<KeyboardNote>();
+  notes = player.getNotes();
+  notes.sort(new NoteComparator());
+
+  // Create all the 128 notes midi defines
+  keyboard = new ArrayList<KeyboardNote>();
   for (int i = 0; i < 128; i++) {
-    KeyboardNote n = new KeyboardNote(i);
-    if (n.isBlackKey)
-      blackKeys.add(n);
-    else
-      piano.add(n);
+    keyboard.add(new KeyboardNote(i));
   }
-  piano.addAll(blackKeys);
+  keyboard.sort(new NoteComparator());
 }
 
 void keyReleased() {
@@ -38,12 +34,19 @@ void keyReleased() {
 void draw() {
   background(20);
 
-  for (KeyboardNote note : piano) {
+  // Draw the first ten for now
+  for (int i = notes.size() - 1; i >= 0; i--) {
+    UpcomingNote note = notes.get(i);
     note.draw();
+
+    if (!player.isPaused()) {
+      note.update();
+      if (note.hidden())
+        notes.remove(i);
+    }
   }
 
-  // Draw the first ten for now
-  for (int i = 0; i < 10; i++) {
-    notes.get(i).draw();
+  for (KeyboardNote key : keyboard) {
+    key.draw();
   }
 }

@@ -1,11 +1,22 @@
 import java.util.Comparator;
 
+// Custom comparator that puts white keys ahead of black keys
+// This way, the black keys are drawn on top of the black keys
+class NoteComparator implements Comparator<Note> {
+  public int compare(Note a, Note b) {
+    if (!a.isBlackKey && b.isBlackKey) return -1;
+    if (a.isBlackKey && !b.isBlackKey) return 1;
+    return 0;
+  }
+}
+
 class Note {
   int value;
+  boolean isBlackKey;
   PVector size;
+  int baseHeight;
   PVector position;
   color c;
-  boolean isBlackKey;
 
   Note(int value) {
     int octave = floor(value / 12); // There are 12 notes in an octave
@@ -19,11 +30,12 @@ class Note {
     // X offsets for the white and black keys in the octave
     float[] offsets = { 0, 0.75, 1, 1.75, 2, 3, 3.75, 4, 4.75, 5, 5.75, 6 };
 
-    int w = 20;
-    int h = isBlackKey ? 65 : 100;
+    float w = width / 75.0; // Midi defines 128 notes, 75 of those are white keys
+    baseHeight = 100;
+    int h = isBlackKey ? baseHeight - 45 : baseHeight;
     size = new PVector(isBlackKey ? w / 2 : w, h);
 
-    int octaveX = octave * w * 7; // The width comes from the 7 white keys
+    float octaveX = octave * w * 7; // The width comes from the 7 white keys
     position = new PVector(octaveX + w * offsets[n], 0);
   }
 
@@ -36,33 +48,49 @@ class Note {
 }
 
 class UpcomingNote extends Note {
-  long startTimestamp;
-  float duration;
-  int fallSpeed;
+  float fallSpeed;
 
-  UpcomingNote(int value, long start, float duration) {
+  // value is the note value
+  // start is the time at which the note starts playing in milliseconds
+  // duration is how long the note is pressed down in milliseconds
+  UpcomingNote(int value, float start, float duration) {
     super(value);
 
-    fallSpeed = 0;
-    startTimestamp = start;
-    this.duration = duration;
+    // Vertical distance that's travelled every frame
+    float pixelsPerSecond = 200;
+    fallSpeed = pixelsPerSecond / frameRate;
+
+    // Set the height of the note based on its duration
+    float durationInSeconds = duration / 1000;
+    size.y = pixelsPerSecond * durationInSeconds;
+
+    // Set the initial y position based on when the note is played
+    float startInSeconds = start / 1000;
+    int startY = height - baseHeight; // Y position of the keyboard notes
+    position.y = startY - startInSeconds * pixelsPerSecond;
+    position.y -= size.y;
+
     getColor();
   }
 
   private void getColor() {
-    float r = map(position.x, 0, width, 0, 255);
-    float b = map(position.y, 0, width, 0, 255);
-    c = color(r, 128, b);
+    float x = map(position.x, 0, width, 0, 255);
+    float y = map(position.y, 0, width, 0, 255);
+    c = color(128, y, x);
+  }
+
+  boolean hidden() {
+    return position.y >= height - baseHeight;
   }
 
   void update() {
-    position.y -= fallSpeed; // TODO: consider delta time
+    position.y += fallSpeed;
   }
 }
 
 class KeyboardNote extends Note {
    KeyboardNote(int value) {
      super(value);
-     position.y = height - 100;
+     position.y = height - baseHeight;
    }
 }

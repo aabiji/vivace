@@ -25,12 +25,12 @@ class MidiPlayer {
   private Sequencer sequencer;
   private ArrayList<UpcomingNote> notes;
   private ArrayList<ShortMessage> instrumentChanges;
-  private int ticksPerQuarterNote;
+  private float millisecondsPerTick;
 
   MidiPlayer() {
     instrumentChanges = new ArrayList<ShortMessage>();
     notes = new ArrayList<UpcomingNote>();
-    ticksPerQuarterNote = 0;
+    millisecondsPerTick = 0;
   }
 
   private void scanSequence(Sequence sequence) {
@@ -67,11 +67,12 @@ class MidiPlayer {
         int velocity = sm.getData2();
         boolean on = sm.getCommand() == ShortMessage.NOTE_ON;
 
+        // FIXME: This falls apart with un_sospiro.mid
         if (on) {
           // Keep track of when the note is turned on
           if (noteEvents.get(key) != null) {
             noteEvents.get(key).push(timestamp);
-            return;
+            continue;
           }
 
           Stack<Long> stack = new Stack<Long>();
@@ -79,13 +80,11 @@ class MidiPlayer {
           noteEvents.put(key, stack);
         } else if ((on && velocity == 0) || (sm.getCommand() == ShortMessage.NOTE_OFF)) {
           // Add a new upcoming note when the note is turned off
-
-          // Using the quarter note as basis we get the
-          // note's actual value (quarter note = 1, eight note = 0.5, etc)
           long whenTurnedOn = noteEvents.get(key).pop();
-          float duration = (float)(timestamp - whenTurnedOn) / (float)ticksPerQuarterNote;
+          float duration = (timestamp - whenTurnedOn) * millisecondsPerTick;
+          float start = whenTurnedOn * millisecondsPerTick;
+          UpcomingNote note = new UpcomingNote(key, start, duration);
 
-          UpcomingNote note = new UpcomingNote(key, whenTurnedOn, duration);
           notes.add(note);
           if (noteEvents.get(key).empty())
             noteEvents.remove(key);
@@ -105,7 +104,9 @@ class MidiPlayer {
       Sequence sequence = MidiSystem.getSequence(stream);
       sequencer.setSequence(sequence);
 
-      ticksPerQuarterNote = sequence.getResolution();
+      int ticksPerQuarterNote = sequence.getResolution();
+      millisecondsPerTick = 60000.0 / (getTempo() * (float)ticksPerQuarterNote);
+
       scanSequence(sequence);
     } catch (Exception exception) {
       return exception.getMessage();
@@ -114,7 +115,7 @@ class MidiPlayer {
   }
 
   boolean isPaused() {
-    return sequencer.isRunning();
+    return !sequencer.isRunning();
   }
 
   void togglePause() {
