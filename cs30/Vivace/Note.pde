@@ -70,6 +70,14 @@ class UpcomingNote extends Note {
     position.y = startY - startInSeconds * pixelsPerSecond;
     position.y -= size.y;
 
+    // Right now we're falling at a constant speed
+    // The height of the note determines when it hits the keyboard
+    // The height is based on the tempo
+    // The problem is that the tempo changes, which means that the
+    // height is wrong, which means that the visual is out of sync with the music
+    // Wait, what if tempo is assigned to each note individually. Like,
+    // find the tempo when that note will be played so that the height is based on tempo???
+
     getColor();
   }
 

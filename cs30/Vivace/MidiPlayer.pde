@@ -26,11 +26,13 @@ class MidiPlayer {
   private ArrayList<UpcomingNote> notes;
   private ArrayList<ShortMessage> instrumentChanges;
   private float millisecondsPerTick;
+  float ticksPerQuarterNote;
 
   MidiPlayer() {
     instrumentChanges = new ArrayList<ShortMessage>();
     notes = new ArrayList<UpcomingNote>();
     millisecondsPerTick = 0;
+    ticksPerQuarterNote = 0;
   }
 
   private void scanSequence(Sequence sequence) {
@@ -51,7 +53,24 @@ class MidiPlayer {
         MidiEvent event = track.get(i);
         long timestamp = event.getTick();
 
+        // Wait, what if tempo is assigned to each note individually. Like,
+        // find the tempo when that note will be played so that the height is based on tempo???
         MidiMessage message = event.getMessage();
+        if (message instanceof MetaMessage) {
+          MetaMessage mm = (MetaMessage) message;
+          if (mm.getType() == 0x51) { // Tempo change message
+            byte[] data = mm.getData();
+            long microsecondsPerQuarterNote = 0;
+            for (int j = 0; j < data.length; j++) {
+               microsecondsPerQuarterNote = (microsecondsPerQuarterNote << 8) + (data[j] & 0xff);
+            }
+            float bpm = 60000000.0 / (float)microsecondsPerQuarterNote;
+            float mpt = 60000.0 / (bpm * ticksPerQuarterNote);
+            println("Milliseconds per tick", mpt);
+          }
+          continue; 
+        }
+        
         if (!(message instanceof ShortMessage)) continue;
         ShortMessage sm = (ShortMessage) message;
 
@@ -105,7 +124,7 @@ class MidiPlayer {
       Sequence sequence = MidiSystem.getSequence(stream);
       sequencer.setSequence(sequence);
 
-      float ticksPerQuarterNote = sequence.getResolution();
+      ticksPerQuarterNote = sequence.getResolution();
       millisecondsPerTick = 60000.0 / (getTempo() * ticksPerQuarterNote);
 
       scanSequence(sequence);
