@@ -67,8 +67,7 @@ class MidiPlayer {
         int velocity = sm.getData2();
         boolean on = sm.getCommand() == ShortMessage.NOTE_ON;
 
-        // FIXME: This falls apart with un_sospiro.mid
-        if (on) {
+        if (on && velocity > 0) {
           // Keep track of when the note is turned on
           if (noteEvents.get(key) != null) {
             noteEvents.get(key).push(timestamp);
@@ -78,8 +77,10 @@ class MidiPlayer {
           Stack<Long> stack = new Stack<Long>();
           stack.push(timestamp);
           noteEvents.put(key, stack);
-        } else if ((on && velocity == 0) || (sm.getCommand() == ShortMessage.NOTE_OFF)) {
-          // Add a new upcoming note when the note is turned off
+        }
+
+        // Add a new upcoming note when the note is turned off        
+        if ((on && velocity == 0) || (sm.getCommand() == ShortMessage.NOTE_OFF)) {
           long whenTurnedOn = noteEvents.get(key).pop();
           float duration = (timestamp - whenTurnedOn) * millisecondsPerTick;
           float start = whenTurnedOn * millisecondsPerTick;
@@ -104,8 +105,8 @@ class MidiPlayer {
       Sequence sequence = MidiSystem.getSequence(stream);
       sequencer.setSequence(sequence);
 
-      int ticksPerQuarterNote = sequence.getResolution();
-      millisecondsPerTick = 60000.0 / (getTempo() * (float)ticksPerQuarterNote);
+      float ticksPerQuarterNote = sequence.getResolution();
+      millisecondsPerTick = 60000.0 / (getTempo() * ticksPerQuarterNote);
 
       scanSequence(sequence);
     } catch (Exception exception) {
