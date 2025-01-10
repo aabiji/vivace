@@ -18,6 +18,7 @@ class Note {
   int startY;
   PVector position;
   color c;
+  boolean drawOutline;
 
   Note(int value) {
     int octave = floor(value / 12); // There are 12 notes in an octave
@@ -42,6 +43,10 @@ class Note {
 
   void draw() {
     fill(c);
+    if (drawOutline) { 
+      strokeWeight(1);
+      stroke(128);
+    }
     rect(position.x, position.y, size.x, size.y);
   }
 
@@ -51,15 +56,13 @@ class Note {
 class UpcomingNote extends Note {
   // Time when the note is first pressed down, In milliseconds
   private float start;
-  // How long the note is pressed down, int milliseconds
-  private float duration;
   // Vertical distance travelled every second
   private final int pixelsPerSecond = 200;
 
   UpcomingNote(int value, float start, float duration) {
     super(value);
     this.start = start;
-    this.duration = duration;
+    drawOutline = false;
 
     // Adjust the height based on the duration of the note
     size.y = (duration / 1000.0) * pixelsPerSecond;
@@ -72,10 +75,6 @@ class UpcomingNote extends Note {
     float x = map(position.x, 0, width, 0, 255);
     float y = map(position.y, 0, width, 0, 255);
     c = color(128, y, x);
-  }
-
-  boolean hidden() {
-    return position.y >= startY;
   }
 
   // Set the y position of the note based on how far
@@ -93,5 +92,6 @@ class KeyboardNote extends Note {
    KeyboardNote(int value) {
      super(value);
      position.y = startY;
+     drawOutline = true;
    }
 }
