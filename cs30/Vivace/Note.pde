@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Comparator;
 
 // Custom comparator that puts white keys ahead of black keys
@@ -14,7 +15,7 @@ class Note {
   int value;
   boolean isBlackKey;
   PVector size;
-  int baseHeight;
+  int startY;
   PVector position;
   color c;
 
@@ -31,8 +32,8 @@ class Note {
     float[] offsets = { 0, 0.75, 1, 1.75, 2, 3, 3.75, 4, 4.75, 5, 5.75, 6 };
 
     float w = width / 75.0; // Midi defines 128 notes, 75 of those are white keys
-    baseHeight = 100;
-    int h = isBlackKey ? baseHeight - 45 : baseHeight;
+    startY = height - 100;
+    int h = isBlackKey ? 65 : 100;
     size = new PVector(isBlackKey ? w / 2 : w, h);
 
     float octaveX = octave * w * 7; // The width comes from the 7 white keys
@@ -48,36 +49,22 @@ class Note {
 }
 
 class UpcomingNote extends Note {
-  float fallSpeed;
+  // Time when the note is first pressed down, In milliseconds
+  private float start;
+  // How long the note is pressed down, int milliseconds
+  private float duration;
+  // Vertical distance travelled every second
+  private final int pixelsPerSecond = 200;
 
-  // value is the note value
-  // start is the time at which the note starts playing in milliseconds
-  // duration is how long the note is pressed down in milliseconds
   UpcomingNote(int value, float start, float duration) {
     super(value);
+    this.start = start;
+    this.duration = duration;
 
-    // Vertical distance that's travelled every frame
-    float pixelsPerSecond = 200;
-    fallSpeed = pixelsPerSecond / frameRate;
+    // Adjust the height based on the duration of the note
+    size.y = (duration / 1000.0) * pixelsPerSecond;
 
-    // Set the height of the note based on its duration
-    float durationInSeconds = duration / 1000;
-    size.y = pixelsPerSecond * durationInSeconds;
-
-    // Set the initial y position based on when the note is played
-    float startInSeconds = start / 1000;
-    int startY = height - baseHeight; // Y position of the keyboard notes
-    position.y = startY - startInSeconds * pixelsPerSecond;
-    position.y -= size.y;
-
-    // Right now we're falling at a constant speed
-    // The height of the note determines when it hits the keyboard
-    // The height is based on the tempo
-    // The problem is that the tempo changes, which means that the
-    // height is wrong, which means that the visual is out of sync with the music
-    // Wait, what if tempo is assigned to each note individually. Like,
-    // find the tempo when that note will be played so that the height is based on tempo???
-
+    update();
     getColor();
   }
 
@@ -88,17 +75,23 @@ class UpcomingNote extends Note {
   }
 
   boolean hidden() {
-    return position.y >= height - baseHeight;
+    return position.y >= startY;
   }
 
-  void update() {
-    position.y += fallSpeed;
+  // Set the y position of the note based on how far
+  // along we are in playback. The bottom of the note should
+  // hit the top edge of the keyboard at the exact moment the
+  // note is played in the music. currentTime is the playback
+  // position in milliseconds
+  void updatePosition(float currentTime) {
+    float timeUntilPlayed = (start - currentTime) / 1000.0;
+    position.y = startY - timeUntilPlayed * pixelsPerSecond - size.y;
   }
 }
 
 class KeyboardNote extends Note {
    KeyboardNote(int value) {
      super(value);
-     position.y = height - baseHeight;
+     position.y = startY;
    }
 }

@@ -3,10 +3,20 @@ MidiPlayer player;
 ArrayList<UpcomingNote> notes;
 ArrayList<KeyboardNote> keyboard;
 
+ArrayList<KeyboardNote> createKeyboard() {
+  // Midi defines 128 keys
+  ArrayList<KeyboardNote> keys = new ArrayList<KeyboardNote>();
+  for (int i = 0; i < 128; i++) {
+      keys.add(new KeyboardNote(i));
+  }
+  keys.sort(new NoteComparator());
+  return keys;
+}
+
 void setup() {
   size(1000, 600);
 
-  String piece = "un_sospiro.mid";
+  String piece = "winter_wind.mid";
   String path = String.format("%s/music/%s", sketchPath(), piece);
 
   player = new MidiPlayer();
@@ -16,14 +26,7 @@ void setup() {
   }
 
   notes = player.getNotes();
-  notes.sort(new NoteComparator());
-
-  // Create all the 128 notes midi defines
-  keyboard = new ArrayList<KeyboardNote>();
-  for (int i = 0; i < 128; i++) {
-    keyboard.add(new KeyboardNote(i));
-  }
-  keyboard.sort(new NoteComparator());
+  keyboard = createKeyboard();
 }
 
 void keyReleased() {
@@ -31,22 +34,26 @@ void keyReleased() {
     player.togglePause();
 }
 
-void draw() {
-  background(20);
-
+void drawNotes() {
   // Draw the first ten for now
   for (int i = notes.size() - 1; i >= 0; i--) {
     UpcomingNote note = notes.get(i);
-    note.draw();
-
     if (!player.isPaused()) {
-      note.update();
-      if (note.hidden())
+      note.updatePosition(player.getPosition() * 1000.0);
+      if (note.hidden()) {
         notes.remove(i);
+        continue;
+      }
     }
+    note.draw();
   }
 
   for (KeyboardNote key : keyboard) {
     key.draw();
   }
+}
+
+void draw() {
+  background(20);
+  drawNotes();
 }
