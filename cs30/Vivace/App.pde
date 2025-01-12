@@ -7,11 +7,13 @@ class App {
 
   private Slider positionSlider;
   private Button toggleButton;
+  private Dropdown instrumentDropdown;
 
   App() {
     createKeyboard();
     positionSlider = new Slider("Position", 20, 20, 100, 0, 0);
     toggleButton = new Button(0, 50, 50, 50, color(0, 0, 255));
+    instrumentDropdown = new Dropdown(100, 20, Instrument.getNames());
   }
 
   private void createKeyboard() {
@@ -40,7 +42,7 @@ class App {
         note.updatePosition(player.getPosition() * 1000.0);
       note.draw();
     }
-  
+
     for (KeyboardNote key : keyboard) {
       key.draw();
     }
@@ -50,14 +52,16 @@ class App {
     noStroke();
     fill(50);
     rect(0, 0, width, 100);
+
     toggleButton.draw();
+    instrumentDropdown.draw();
 
     positionSlider.setValue(player.getPosition());
     positionSlider.draw(color(255, 0, 0), color(0, 255, 0));
     if (positionSlider.handleDrag())
       player.setPosition(positionSlider.getValue());
   }
-  
+
   void draw() {
     background(20);
     drawNotes();
@@ -65,6 +69,7 @@ class App {
   }
 
   void handleClick() {
+    instrumentDropdown.handleClick();
     if (toggleButton.mouseInside())
       player.togglePause();
   }

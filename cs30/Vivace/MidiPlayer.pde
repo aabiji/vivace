@@ -19,6 +19,11 @@ enum Instrument {
   Instrument(int index) {
     this.index = index;
   }
+
+  static String[] getNames() {
+    String[] names = { "Grand piano", "Electric piano", "Guitar", "Xylophone", "Violin" };
+    return names;
+  }
 }
 
 private class TempoChange {
