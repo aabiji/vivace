@@ -10,19 +10,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Stack;
 
+// Instrument indexes are taken from the
+// General Midi standard: https://en.wikipedia.org/wiki/General_MIDI
 enum Instrument {
   GrandPiano(0), ElectricPiano(4), Guitar(25), Xylophone(13), Violin(40);
+  static String[] Names = { "Grand piano", "Electric piano", "Guitar", "Xylophone", "Violin" };
 
-  // Instrument indexes are taken from the
-  // General Midi standard: https://en.wikipedia.org/wiki/General_MIDI
   int index;
   Instrument(int index) {
     this.index = index;
-  }
-
-  static String[] getNames() {
-    String[] names = { "Grand piano", "Electric piano", "Guitar", "Xylophone", "Violin" };
-    return names;
   }
 }
 
@@ -44,8 +40,15 @@ private long bytesToLong(byte[] data) {
   return value;
 }
 
+String formatTime(float seconds) {
+  int minutes = seconds > 0 ? floor(seconds / 60) : 0;
+  seconds = seconds > 0 ? seconds - minutes * 60 : 0;
+  return String.format("%02d:%02d", minutes, (int)seconds);
+}
+
 class MidiPlayer {
   private Sequencer sequencer;
+  private Instrument instrument;
 
   private ArrayList<UpcomingNote> notes;
   private ArrayList<TempoChange> tempoChanges;
@@ -60,6 +63,7 @@ class MidiPlayer {
     instrumentChanges = new ArrayList<ShortMessage>();
     tempoChanges = new ArrayList<TempoChange>();
     notes = new ArrayList<UpcomingNote>();
+    instrument = Instrument.GrandPiano;
     ticksPerQuarterNote = 0.0;
   }
 
@@ -219,6 +223,15 @@ class MidiPlayer {
     return (sequencer.getMicrosecondPosition() / 1000000.0) - audioLatency;
   }
 
+  // Format the playback position in a string
+  String getPositionStr() {
+    return String.format(
+      "%s / %s",
+      formatTime(getPosition()),
+      formatTime(getDuration())
+    );
+  }
+
   // Set the playback position of the music
   void setPosition(float positionInSeconds) {
     sequencer.setMicrosecondPosition((long)(positionInSeconds * 1000000.0));
@@ -231,5 +244,9 @@ class MidiPlayer {
 
   ArrayList<UpcomingNote> getNotes() {
     return notes;
+  }
+
+  void setInstrument(Instrument i) {
+    instrument = i;
   }
 }

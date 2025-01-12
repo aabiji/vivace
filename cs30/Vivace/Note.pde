@@ -43,14 +43,12 @@ class Note {
 
   void draw() {
     fill(c);
-    if (drawOutline) { 
+    if (drawOutline) {
       strokeWeight(1);
       stroke(128);
     }
     rect(position.x, position.y, size.x, size.y);
   }
-
-  void update() {}
 }
 
 class UpcomingNote extends Note {
@@ -67,7 +65,7 @@ class UpcomingNote extends Note {
     // Adjust the height based on the duration of the note
     size.y = (duration / 1000.0) * pixelsPerSecond;
 
-    update();
+    updatePosition(0);
     getColor();
   }
 
