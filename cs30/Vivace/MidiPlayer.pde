@@ -132,6 +132,9 @@ class MidiPlayer {
 
         // Add a new upcoming note when the note is turned off
         if ((on && velocity == 0) || off) {
+          if (noteEvents.get(value) == null)
+            continue; // Ignore redundant NOTE OFF events
+
           long whenTurnedOn = noteEvents.get(value).pop();
           float start = ticksToMilliseconds(whenTurnedOn) + (audioLatency * 1000);
           float end = ticksToMilliseconds(timestamp) + (audioLatency * 1000);

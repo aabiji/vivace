@@ -11,10 +11,10 @@ App app;
 void setup() {
   size(1000, 650);
 
-  String piece = "winter_wind.mid";
+  String piece = "clair_de_lune.mid";
   String path = String.format("%s/music/%s", sketchPath(), piece);
   app = new App();
-  app.init(path); // TODO: handle possible error
+  String error = app.init(path); // TODO: handle possible error
 }
 
 void mouseClicked() {

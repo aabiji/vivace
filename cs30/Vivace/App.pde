@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.HashMap;
 
 class App {
   MidiPlayer player;
@@ -32,12 +34,12 @@ class App {
     // Define all 128 midi keys
     keyboard = new ArrayList<KeyboardNote>();
     for (int i = 0; i < 128; i++) {
-        keyboard.add(new KeyboardNote(i));
+      keyboard.add(new KeyboardNote(i));
     }
     keyboard.sort(new NoteComparator());
   }
 
-  private void drawNotes() {
+  private void updateNotes() {
     // Draw lines separating the octaves
     stroke(color(25, 25, 25));
     float octaveWidth = keyboard.get(0).size.x * 7;
@@ -47,38 +49,51 @@ class App {
       x += octaveWidth;
     }
 
+    HashMap<Integer, Boolean> pressedNotes = new HashMap<Integer, Boolean>();
+
     // Draw all the notes
     for (int i = notes.size() - 1; i >= 0; i--) {
       UpcomingNote note = notes.get(i);
+      if (note.hidden()) continue;
       if (!player.isPaused())
         note.updatePosition(player.getPosition() * 1000.0);
+      if (note.hittingKeyboard())
+        pressedNotes.put(note.value, true);
       note.draw();
     }
 
-    for (KeyboardNote key : keyboard) {
-      key.draw();
+    for (KeyboardNote note : keyboard) {
+      boolean highlighted = pressedNotes.get(note.value) != null;
+      note.draw(highlighted);
     }
   }
 
-  private void updateControls() {
+  private void updatePositionSlider() {
+    positionSlider.setValue(player.getPosition());
+    positionSlider.setLabel(player.getPositionStr());
+    positionSlider.draw();
+
+    if (positionSlider.handleDrag()) {
+      float seconds = positionSlider.getValue();
+      player.setPosition(seconds);
+      for (UpcomingNote note : notes) {
+        note.updatePosition(seconds * 1000);
+      }
+    }
+  }
+
+  void draw() {
+    background(color(15, 15, 15));
+    updateNotes();
+
+    // Draw the control panel
     noStroke();
     fill(color(31, 31, 31));
     rect(0, 0, width, 45);
 
     toggleButton.draw();
     instrumentDropdown.draw();
-
-    positionSlider.setValue(player.getPosition());
-    positionSlider.setLabel(player.getPositionStr());
-    positionSlider.draw();
-    if (positionSlider.handleDrag())
-      player.setPosition(positionSlider.getValue());
-  }
-
-  void draw() {
-    background(color(15, 15, 15));
-    drawNotes();
-    updateControls();
+    updatePositionSlider();
   }
 
   void handleClick() {

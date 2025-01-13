@@ -84,12 +84,28 @@ class UpcomingNote extends Note {
     float timeUntilPlayed = (start - currentTime) / 1000.0;
     position.y = startY - timeUntilPlayed * pixelsPerSecond - size.y;
   }
+
+  boolean hittingKeyboard() {
+    return startY >= position.y && startY <= position.y + size.y;
+  }
+
+  boolean hidden() {
+    return position.y >= startY;
+  }
 }
 
 class KeyboardNote extends Note {
+  color actualColor;
+
    KeyboardNote(int value) {
      super(value);
      position.y = startY;
      drawOutline = true;
+     actualColor = c;
+   }
+
+   void draw(boolean highlighted) {
+    c = highlighted ? color(0, 255, 0) : actualColor;
+    super.draw();
    }
 }
