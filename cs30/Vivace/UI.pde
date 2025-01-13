@@ -70,7 +70,6 @@ class Button {
   private PVector size;
   private PVector position;
   private String text;
-  private color c;
   private PShape[] icons;
   private int iconIndex;
 
@@ -81,11 +80,10 @@ class Button {
     iconIndex = 0;
   }
 
-  Button(String text, int x, int y, int w, int h, color c) {
+  Button(String text, int x, int y, int w, int h) {
     size = new PVector(w, h);
-    position = new PVector(x, y);
+    position = new PVector(x - w / 2, y - h / 2);
     this.text = text;
-    this.c = c;
   }
 
   private boolean mouseInside() {
@@ -96,14 +94,16 @@ class Button {
 
   boolean handleClick() {
     if (!mouseInside()) return false;
-    iconIndex = (iconIndex + 1) % icons.length;
+    if (icons != null)
+      iconIndex = (iconIndex + 1) % icons.length;
     return true;
   }
 
   void draw() {
     if (text != null) {
-      fill(c);
+      fill(mouseInside() ? color(41, 41, 41) : color(31, 31, 31));
       rect(position.x, position.y, size.x, size.y);
+      fill(255);
       drawText(text, position.x + size.x / 2, position.y + size.y / 2, 15);
     } else {
       shape(icons[iconIndex], position.x, position.y, size.x, size.y);

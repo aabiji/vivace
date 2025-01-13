@@ -3,31 +3,54 @@ import java.util.HashMap;
 
 class App {
   MidiPlayer player;
-
   private ArrayList<UpcomingNote> notes;
   private ArrayList<KeyboardNote> keyboard;
 
   private Slider positionSlider;
   private Button toggleButton;
   private Dropdown instrumentDropdown;
+  private Button backButton;
+
+  private Button loadButton;
+  private Button resumeButton;
+  private String errorMessage;
+  private boolean drawingMenu;
 
   App() {
     createKeyboard();
     // TODO: don't hardcode positions
-    PShape[] icons = { loadShape("play.svg"), loadShape("pause.svg") };
-    toggleButton = new Button(icons, 25, 15, 20, 20);
-    positionSlider = new Slider(55, 15, 785, 0, 0);
-    instrumentDropdown = new Dropdown(850, 10, 130, 25, Instrument.Names);
+    PShape[] icons = { loadShape("back.svg") };
+    backButton = new Button(icons, 15, 15, 20, 20);
+
+    PShape[] toggleIcons = { loadShape("play.svg"), loadShape("pause.svg") };
+    toggleButton = new Button(toggleIcons, 50, 15, 20, 20);
+
+    positionSlider = new Slider(95, 15, 750, 0, 0);
+    instrumentDropdown = new Dropdown(870, 10, 110, 25, Instrument.Names);
+
+    loadButton = new Button("Load song", width / 2, 260, 150, 45);
+    resumeButton = new Button("Resume playback", width / 2, 340, 150, 45);
+
+    drawingMenu = true;
   }
 
   // Load the midi file, return null on error
-  String init(String path) {
+  void init(String path) {
+    String extension = "";
+    int i = path.lastIndexOf(".");
+    if (i > 0) extension = path.substring(i + 1);
+    if (!extension.equals("mid")) {
+      errorMessage = "Input file must be a midi file";
+      return;
+    }
+
     player = new MidiPlayer();
-    String error = player.load(path);
-    if (error != null) return error;
+    errorMessage = player.load(path);
+    if (errorMessage != null) return;
+
     notes = player.getNotes();
     positionSlider.updateEnd(player.getDuration());
-    return null;
+    drawingMenu = false;
   }
 
   private void createKeyboard() {
@@ -82,21 +105,49 @@ class App {
     }
   }
 
-  void draw() {
-    background(color(15, 15, 15));
-    updateNotes();
-
-    // Draw the control panel
+  void drawControlPanel() {
     noStroke();
     fill(color(31, 31, 31));
     rect(0, 0, width, 45);
 
+    backButton.draw();
     toggleButton.draw();
     instrumentDropdown.draw();
     updatePositionSlider();
   }
 
+  void draw() {
+    background(color(15, 15, 15));
+
+    if (drawingMenu) {
+      fill(255);
+      drawText("Vivace", width / 2, height / 4, 35);
+
+      loadButton.draw();
+      resumeButton.draw();
+
+      if (errorMessage != null) {
+        fill(color(255, 0, 0));
+        drawText(errorMessage, width / 2, 400, 20);
+      }
+      return;
+    }
+
+    updateNotes();
+    drawControlPanel();
+  }
+
   void handleClick() {
+    if (backButton.handleClick()) {
+      drawingMenu = true;
+      if (!player.isPaused())
+        player.togglePause();
+    }
+
+    if (loadButton.handleClick()) {
+      selectInput("Select a midi file", "fileSelected");
+    }
+
     if (instrumentDropdown.handleClick()) {
       Instrument i = Instrument.valueOf(instrumentDropdown.enumOption());
       player.setInstrument(i);
