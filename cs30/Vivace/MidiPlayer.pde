@@ -48,11 +48,12 @@ String formatTime(float seconds) {
 
 class MidiPlayer {
   private Sequencer sequencer;
-  private Instrument instrument;
 
   private ArrayList<UpcomingNote> notes;
   private ArrayList<TempoChange> tempoChanges;
+
   private ArrayList<ShortMessage> instrumentChanges;
+  private Instrument instrument;
 
   private float ticksPerQuarterNote;
   // To account for potential lag from
@@ -60,11 +61,11 @@ class MidiPlayer {
   private final float audioLatency = 0.05;
 
   MidiPlayer() {
-    instrumentChanges = new ArrayList<ShortMessage>();
     tempoChanges = new ArrayList<TempoChange>();
     notes = new ArrayList<UpcomingNote>();
-    instrument = Instrument.GrandPiano;
     ticksPerQuarterNote = 0.0;
+    instrumentChanges = new ArrayList<ShortMessage>();
+    instrument = Instrument.GrandPiano;
   }
 
   // Store changes in tempo and in instrument choice
@@ -191,6 +192,7 @@ class MidiPlayer {
       ticksPerQuarterNote = sequence.getResolution();
       getChanges(sequence);
       extractNotes(sequence);
+      setInstrument(instrument);
     } catch (Exception exception) {
       return exception.getMessage();
     }
@@ -209,16 +211,6 @@ class MidiPlayer {
       sequencer.start();
       sequencer.setTempoInBPM(tempo);
     }
-  }
-
-  // Get the tempo in beats per minute
-  float getTempo() {
-    return sequencer.getTempoInBPM();
-  }
-
-  // Set the tempo in beats per minute
-  void setTempo(float tempo) {
-    sequencer.setTempoInBPM(tempo);
   }
 
   // Get the playback position in seconds
@@ -249,7 +241,21 @@ class MidiPlayer {
     return notes;
   }
 
-  void setInstrument(Instrument i) {
-    instrument = i;
+  Instrument getInstrument() {
+    return instrument;
+  }
+
+  void setInstrument(Instrument newInstrument) {
+    instrument = newInstrument;
+
+    try {
+      for (ShortMessage sm : instrumentChanges) {
+        sm.setMessage(sm.getCommand(), sm.getChannel(), instrument.index, 0);
+      }
+
+      float previous = getPosition();
+      setPosition(0);
+      setPosition(previous);
+    } catch (InvalidMidiDataException  e) {}
   }
 }

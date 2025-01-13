@@ -16,6 +16,9 @@ class App {
   private String errorMessage;
   private boolean drawingMenu;
 
+  private JSONObject state;
+  private String file;
+
   App() {
     createKeyboard();
     // TODO: don't hardcode positions
@@ -32,25 +35,55 @@ class App {
     resumeButton = new Button("Resume playback", width / 2, 340, 150, 45);
 
     drawingMenu = true;
+    state = new JSONObject();
   }
 
-  // Load the midi file, return null on error
+  // Load the midi file. To load previous state, set file to null
   void init(String path) {
+    float position = 0;
+    Instrument instrument = Instrument.GrandPiano;
+    file = path;
+
+    // Load previously stored state
+    if (path == null) {
+      state = loadJSONObject("data/state.json");
+      if (state == null) {
+        errorMessage = "Have no previous state. Must load a new song.";
+        return;
+      }
+      file = state.getString("file");
+      position = state.getFloat("position");
+      instrument = Instrument.valueOf(state.getString("instrument"));
+    }
+
     String extension = "";
-    int i = path.lastIndexOf(".");
-    if (i > 0) extension = path.substring(i + 1);
+    int i = file.lastIndexOf(".");
+    if (i > 0) extension = file.substring(i + 1);
     if (!extension.equals("mid")) {
       errorMessage = "Input file must be a midi file";
       return;
     }
 
     player = new MidiPlayer();
-    errorMessage = player.load(path);
+    errorMessage = player.load(file);
     if (errorMessage != null) return;
 
     notes = player.getNotes();
+    player.setInstrument(instrument);
+    player.setPosition(position);
+
     positionSlider.updateEnd(player.getDuration());
+    positionSlider.setValue(position);
+
     drawingMenu = false;
+  }
+
+  void saveState() {
+    if (file == null) return; // Not loaded
+    state.setString("instrument", player.getInstrument().name());
+    state.setFloat("position", player.getPosition());
+    state.setString("file", file);
+    saveJSONObject(state, "data/state.json");
   }
 
   private void createKeyboard() {
@@ -138,14 +171,16 @@ class App {
   }
 
   void handleClick() {
+    if (loadButton.handleClick())
+      selectInput("Select a midi file", "fileSelected");
+
+    if (resumeButton.handleClick())
+      init(null);
+
     if (backButton.handleClick()) {
       drawingMenu = true;
       if (!player.isPaused())
         player.togglePause();
-    }
-
-    if (loadButton.handleClick()) {
-      selectInput("Select a midi file", "fileSelected");
     }
 
     if (instrumentDropdown.handleClick()) {

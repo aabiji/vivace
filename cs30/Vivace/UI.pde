@@ -165,6 +165,8 @@ class Dropdown {
     if (index == -1) return false;
 
     menuOpened = !menuOpened;
+    if (index == 0) return false; // Option hasn't changed
+
     // Swap the currently selection option that's set at index 0
     if (index > 0) {
       String previous = options[0];

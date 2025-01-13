@@ -15,6 +15,11 @@ void fileSelected(File file) {
     app.init(file.getAbsolutePath());
 }
 
+void exit() {
+  app.saveState();
+  super.exit();
+}
+
 void draw() {
   app.draw();
 }
