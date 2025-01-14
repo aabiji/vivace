@@ -99,6 +99,10 @@ class Button {
     return true;
   }
 
+  void reset() {
+    iconIndex = 0; 
+  }
+
   void draw() {
     if (text != null) {
       fill(mouseInside() ? color(41, 41, 41) : color(31, 31, 31));

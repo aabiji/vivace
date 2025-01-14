@@ -51,7 +51,13 @@ class App {
         errorMessage = "Have no previous state. Must load a new song.";
         return;
       }
+
       file = state.getString("file");
+      if (file.length() == 0) {
+        errorMessage = "You don't have a save file to load from";
+        return;
+      }
+      
       position = state.getFloat("position");
       instrument = Instrument.valueOf(state.getString("instrument"));
     }
@@ -75,6 +81,7 @@ class App {
     positionSlider.updateEnd(player.getDuration());
     positionSlider.setValue(position);
 
+    updateNotes(true);
     drawingMenu = false;
   }
 
@@ -95,7 +102,7 @@ class App {
     keyboard.sort(new NoteComparator());
   }
 
-  private void updateNotes() {
+  private void updateNotes(boolean forceUpdate) {
     // Draw lines separating the octaves
     stroke(color(25, 25, 25));
     float octaveWidth = keyboard.get(0).size.x * 7;
@@ -111,7 +118,7 @@ class App {
     for (int i = notes.size() - 1; i >= 0; i--) {
       UpcomingNote note = notes.get(i);
       if (note.hidden()) continue;
-      if (!player.isPaused())
+      if (!player.isPaused() || forceUpdate)
         note.updatePosition(player.getPosition() * 1000.0);
       if (note.hittingKeyboard())
         pressedNotes.put(note.value, true);
@@ -166,12 +173,13 @@ class App {
       return;
     }
 
-    updateNotes();
+    updateNotes(false);
     drawControlPanel();
   }
 
   void handleClick() {
     if (loadButton.handleClick())
+      // TODO: Use  JFileChooser to better control the OS file dialog
       selectInput("Select a midi file", "fileSelected");
 
     if (resumeButton.handleClick())
@@ -181,6 +189,8 @@ class App {
       drawingMenu = true;
       if (!player.isPaused())
         player.togglePause();
+      saveState();
+      toggleButton.reset();
     }
 
     if (instrumentDropdown.handleClick()) {
