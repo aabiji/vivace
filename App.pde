@@ -86,6 +86,7 @@ class App {
 
     updateNotes(true);
     drawingMenu = false;
+    cursor(ARROW);
   }
 
   void saveState() {

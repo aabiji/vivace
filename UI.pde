@@ -72,12 +72,14 @@ class Button {
   private String text;
   private PShape[] icons;
   private int iconIndex;
+  private boolean hovering;
 
   Button(PShape[] icons, int x, int y, int w, int h) {
     size = new PVector(w, h);
     position = new PVector(x, y);
     this.icons = icons;
     iconIndex = 0;
+    hovering = false;
   }
 
   Button(String text, int x, int y, int w, int h) {
@@ -103,7 +105,19 @@ class Button {
     iconIndex = 0; 
   }
 
+  // Make the cursor reflect whether the mouse is hovering the element
+  void setCursor() {
+    if (mouseInside() && !hovering) {
+      cursor(HAND);
+      hovering = true;
+    } else if (hovering && !mouseInside()) {
+      cursor(ARROW);
+      hovering = false;
+    }
+  }
+
   void draw() {
+    setCursor();
     if (text != null) {
       fill(mouseInside() ? color(41, 41, 41) : color(31, 31, 31));
       rect(position.x, position.y, size.x, size.y);
@@ -120,12 +134,14 @@ class Dropdown {
   private PVector size;
   private String[] options;
   private boolean menuOpened;
+  private boolean hovering;
 
   Dropdown(float x, float y, float w, float h, String[] options) {
     this.options = options;
     position = new PVector(x, y);
     size = new PVector(w, h);
     menuOpened = false;
+    hovering = false;
   }
 
   // Get the current option formatted as an enum
@@ -139,21 +155,6 @@ class Dropdown {
     return enumName;
   }
 
-  void draw() {
-    stroke(color(61, 61, 61));
-    textSize(15);
-    // Draw the options
-    int count = menuOpened ? options.length : 1;
-    for (int i = 0; i < count; i++) {
-      color bg = i == 0 ? color(51, 51, 51) : color(41, 41, 41);
-      float y = position.y + size.y * i;
-      fill(bg);
-      rect(position.x, y, size.x, size.y);
-      fill(255);
-      drawText(options[i], position.x + size.x / 2, y + size.y / 2, 15);
-    }
-  }
-
   // Return the index of the option that was clicked, return -1 if not clicking the dropdown
   private int hoveredOption() {
     float h = menuOpened ? options.length * size.y : size.y;
@@ -162,6 +163,33 @@ class Dropdown {
       (mouseX >= position.x && mouseX <= position.x + size.x) &&
       (mouseY >= position.y && mouseY <= position.y + h);
     return inside ? (int)y : -1;
+  }
+
+  // Make the cursor reflect whether the mouse is hovering the element
+  void setCursor() {
+    if (hoveredOption() != -1 && !hovering) {
+      cursor(HAND);
+      hovering = true;
+    } else if (hovering && hoveredOption() == -1) {
+      cursor(ARROW);
+      hovering = false;
+    }
+  }
+
+  void draw() {
+    setCursor();
+    stroke(color(61, 61, 61));
+    textSize(15);
+    // Draw the options
+    int count = menuOpened ? options.length : 1;
+    for (int i = 0; i < count; i++) {
+      color bg = i == hoveredOption() ? color(51, 51, 51) : color(41, 41, 41);
+      float y = position.y + size.y * i;
+      fill(bg);
+      rect(position.x, y, size.x, size.y);
+      fill(255);
+      drawText(options[i], position.x + size.x / 2, y + size.y / 2, 15);
+    }
   }
 
   boolean handleClick() {
