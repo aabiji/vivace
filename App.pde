@@ -1,3 +1,6 @@
+import java.awt.FileDialog;
+import java.awt.Frame;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -177,10 +180,23 @@ class App {
     drawControlPanel();
   }
 
+  String openFileDialog() {
+    Frame frame = new Frame("File Dialog");
+    FileDialog dialog = new FileDialog(frame, "Pick a song", FileDialog.LOAD);
+
+    dialog.setFile("*.mid");
+    dialog.setDirectory(sketchPath() + "/music");
+    dialog.setVisible(true);
+
+    String file = dialog.getFile();
+    return file != null ? dialog.getDirectory() + file : null;
+  }
+
   void handleClick() {
-    if (loadButton.handleClick())
-      // TODO: Use  JFileChooser to better control the OS file dialog
-      selectInput("Select a midi file", "fileSelected");
+    if (loadButton.handleClick()) {
+      String path = openFileDialog();
+      if (path != null) init(path);
+    }
 
     if (resumeButton.handleClick())
       init(null);
