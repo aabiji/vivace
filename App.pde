@@ -21,6 +21,7 @@ class App {
 
   private JSONObject state;
   private String file;
+  private String filename;
 
   App() {
     createKeyboard();
@@ -63,6 +64,7 @@ class App {
       
       position = state.getFloat("position");
       instrument = Instrument.valueOf(state.getString("instrument"));
+      println(instrument.toString());
     }
 
     String extension = "";
@@ -72,6 +74,7 @@ class App {
       errorMessage = "Input file must be a midi file";
       return;
     }
+    filename = new File(file).getName();
 
     player = new MidiPlayer();
     errorMessage = player.load(file);
@@ -137,7 +140,9 @@ class App {
 
   private void updatePositionSlider() {
     positionSlider.setValue(player.getPosition());
-    positionSlider.setLabel(player.getPositionStr());
+    String filename = new File(file).getName();
+    String label = String.format("%s - %s", player.getPositionStr(), filename);
+    positionSlider.setLabel(label);
     positionSlider.draw();
 
     if (positionSlider.handleDrag()) {
@@ -211,7 +216,7 @@ class App {
     }
 
     if (instrumentDropdown.handleClick()) {
-      Instrument i = Instrument.valueOf(instrumentDropdown.enumOption());
+      Instrument i = Instrument.valueOf(instrumentDropdown.currentOption());
       player.setInstrument(i);
     }
 

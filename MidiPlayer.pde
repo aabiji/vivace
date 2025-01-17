@@ -12,9 +12,10 @@ import java.util.Stack;
 
 // Instrument indexes are taken from the
 // General Midi standard: https://en.wikipedia.org/wiki/General_MIDI
+// Note that the indexes are 0 indexed
 enum Instrument {
-  GrandPiano(0), ElectricPiano(4), Guitar(25), Xylophone(13), Violin(40);
-  static String[] Names = { "Grand piano", "Electric piano", "Guitar", "Xylophone", "Violin" };
+  GrandPiano(0), Guitar(25), Xylophone(13), Violin(40), Trumpet(56), Flute(75), Drum(117);
+  static String[] Names = { "Piano", "Guitar", "Xylophone", "Violin", "Trumpet", "Flute", "Drum" };
 
   int index;
   Instrument(int index) {
@@ -192,7 +193,7 @@ class MidiPlayer {
       ticksPerQuarterNote = sequence.getResolution();
       getChanges(sequence);
       extractNotes(sequence);
-      setInstrument(instrument);
+      setInstrument(Instrument.GrandPiano);
     } catch (Exception exception) {
       return exception.getMessage();
     }

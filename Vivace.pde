@@ -8,6 +8,29 @@ https://en.wikipedia.org/wiki/General_MIDI
 https://www.javatpoint.com/filedialog-java
 */
 
+// TODO: create a readme and finish documentation
+
+/*
+User feedback:
+The purpose of the program was confusing, the main menu should make it more obvious.
+“Wasn’t sure if it was a game or teaching you the song”
+
+
+The main menu and  the ui elements should look nicer
+
+The user should be able to choose different colors for the notes
+
+The user should be able to control the tempo
+
+Add more instruments and more default songs
+*/
+
+// TODO: make sure each default midi file works
+// TODO: test each instrument
+// BUG: when the playback finishes, the play/pause icon button isn't updated
+// BUG: not setting the current instrument in the dropdown when resuming song
+// BUG: holding the slider down at one point halts the playback down into a screeching noise
+
 App app;
 
 void setup() {

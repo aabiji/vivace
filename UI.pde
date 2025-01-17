@@ -44,7 +44,7 @@ class Slider {
 
     // Draw the label and the slider line
     line(x, y, x + lineWidth, y);
-    drawText(label, x + 35, y + 15, 15);
+    drawText(label, x + textWidth(label) / 2, y + 15, 15);
 
     // Draw the slider drag handle
     noStroke();
@@ -144,17 +144,6 @@ class Dropdown {
     hovering = false;
   }
 
-  // Get the current option formatted as an enum
-  String enumOption() {
-    String enumName = "";
-    String[] parts = options[0].split(" ");
-    for (String part : parts) {
-      String str = Character.toUpperCase(part.charAt(0)) + part.substring(1);
-      enumName += str;
-    }
-    return enumName;
-  }
-
   // Return the index of the option that was clicked, return -1 if not clicking the dropdown
   private int hoveredOption() {
     float h = menuOpened ? options.length * size.y : size.y;
@@ -192,6 +181,17 @@ class Dropdown {
     }
   }
 
+  void setOption(int index) {
+    // Swap the currently selection option that's set at index 0
+    String previous = options[0];
+    options[0] = options[index];
+    options[index] = previous;
+  }
+  
+  String currentOption() {
+    return options[0]; 
+  }
+
   boolean handleClick() {
     int index = hoveredOption();
     if (index == -1) return false;
@@ -200,11 +200,7 @@ class Dropdown {
     if (index == 0) return false; // Option hasn't changed
 
     // Swap the currently selection option that's set at index 0
-    if (index > 0) {
-      String previous = options[0];
-      options[0] = options[index];
-      options[index] = previous;
-    }
+    if (index > 0) setOption(index);
     return true;
   }
 }
