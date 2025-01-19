@@ -14,7 +14,7 @@ import java.util.Stack;
 // General Midi standard: https://en.wikipedia.org/wiki/General_MIDI
 // Note that the indexes are 0 indexed
 enum Instrument {
-  GrandPiano(0), Guitar(25), Xylophone(13), Violin(40), Trumpet(56), Flute(75), Drum(117);
+  Piano(0), Guitar(25), Xylophone(13), Violin(40), Trumpet(56), Flute(75), Drum(117);
   static String[] Names = { "Piano", "Guitar", "Xylophone", "Violin", "Trumpet", "Flute", "Drum" };
 
   int index;
@@ -66,7 +66,6 @@ class MidiPlayer {
     notes = new ArrayList<UpcomingNote>();
     ticksPerQuarterNote = 0.0;
     instrumentChanges = new ArrayList<ShortMessage>();
-    instrument = Instrument.GrandPiano;
   }
 
   // Store changes in tempo and in instrument choice
@@ -193,7 +192,7 @@ class MidiPlayer {
       ticksPerQuarterNote = sequence.getResolution();
       getChanges(sequence);
       extractNotes(sequence);
-      setInstrument(Instrument.GrandPiano);
+      setInstrument(Instrument.Piano);
     } catch (Exception exception) {
       return exception.getMessage();
     }

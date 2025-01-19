@@ -45,7 +45,7 @@ class App {
   // Load the midi file. To load previous state, set file to null
   void init(String path) {
     float position = 0;
-    Instrument instrument = Instrument.GrandPiano;
+    Instrument instrument = Instrument.Piano;
     file = path;
 
     // Load previously stored state
@@ -64,7 +64,6 @@ class App {
       
       position = state.getFloat("position");
       instrument = Instrument.valueOf(state.getString("instrument"));
-      println(instrument.toString());
     }
 
     String extension = "";
@@ -83,6 +82,7 @@ class App {
     notes = player.getNotes();
     player.setInstrument(instrument);
     player.setPosition(position);
+    instrumentDropdown.setOption(instrument.toString());
 
     positionSlider.updateEnd(player.getDuration());
     positionSlider.setValue(position);
@@ -143,15 +143,9 @@ class App {
     String filename = new File(file).getName();
     String label = String.format("%s - %s", player.getPositionStr(), filename);
     positionSlider.setLabel(label);
+    if (mousePressed)
+      positionSlider.handleDrag();
     positionSlider.draw();
-
-    if (positionSlider.handleDrag()) {
-      float seconds = positionSlider.getValue();
-      player.setPosition(seconds);
-      for (UpcomingNote note : notes) {
-        note.updatePosition(seconds * 1000);
-      }
-    }
   }
 
   void drawControlPanel() {
@@ -159,8 +153,11 @@ class App {
     fill(color(31, 31, 31));
     rect(0, 0, width, 45);
 
-    backButton.draw();
+    boolean done = floor(player.getPosition()) == floor(player.getDuration());
+    if (done) toggleButton.reset();
     toggleButton.draw();
+
+    backButton.draw();
     instrumentDropdown.draw();
     updatePositionSlider();
   }
@@ -215,12 +212,20 @@ class App {
       toggleButton.reset();
     }
 
+    if (toggleButton.handleClick())
+      player.togglePause();
+
+    if (positionSlider.handleDrag()) {
+      float seconds = positionSlider.getValue();
+      player.setPosition(seconds);
+      for (UpcomingNote note : notes) {
+        note.updatePosition(seconds * 1000);
+      }
+    }
+
     if (instrumentDropdown.handleClick()) {
       Instrument i = Instrument.valueOf(instrumentDropdown.currentOption());
       player.setInstrument(i);
     }
-
-    if (toggleButton.handleClick())
-      player.togglePause();
   }
 }

@@ -37,13 +37,16 @@ class Slider {
   }
 
   void draw() {
-    stroke(color(133, 133, 133));
     fill(color(255, 255, 255));
     textSize(15);
     strokeWeight(4);
 
     // Draw the label and the slider line
+    float endX = map(value, 0.0, rangeEnd, 0.0, lineWidth);
+    stroke(color(133, 133, 133));
     line(x, y, x + lineWidth, y);
+    stroke(color(0, 255, 0));
+    line(x, y, x + endX, y);
     drawText(label, x + textWidth(label) / 2, y + 15, 15);
 
     // Draw the slider drag handle
@@ -58,7 +61,7 @@ class Slider {
     int padding = 30;
     boolean yOnSlider = mouseY > y - padding / 2 && mouseY < y + padding / 2;
     boolean xOnSlider = mouseX >= x && mouseX <= x + lineWidth;
-    if (!mousePressed || !xOnSlider || !yOnSlider) return false;
+    if (!xOnSlider || !yOnSlider) return false;
 
     float xpos = max(x, min(mouseX, x + lineWidth)); // Clamp to the slider bounds
     value = map(xpos - x, 0, lineWidth, rangeStart, rangeEnd);
@@ -154,8 +157,15 @@ class Dropdown {
     return inside ? (int)y : -1;
   }
 
+  // Swap the option at index with the current option (always at index 0)
+  private void swapOption(int index) {
+    String previous = options[0];
+    options[0] = options[index];
+    options[index] = previous;
+  }
+
   // Make the cursor reflect whether the mouse is hovering the element
-  void setCursor() {
+  private void setCursor() {
     if (hoveredOption() != -1 && !hovering) {
       cursor(HAND);
       hovering = true;
@@ -164,7 +174,7 @@ class Dropdown {
       hovering = false;
     }
   }
-
+  
   void draw() {
     setCursor();
     stroke(color(61, 61, 61));
@@ -181,15 +191,19 @@ class Dropdown {
     }
   }
 
-  void setOption(int index) {
-    // Swap the currently selection option that's set at index 0
-    String previous = options[0];
-    options[0] = options[index];
-    options[index] = previous;
-  }
-  
-  String currentOption() {
-    return options[0]; 
+  String currentOption() { return options[0]; }
+
+  void setOption(String option) {
+    int index = -1;
+    for (int i = 0; i < options.length; i++) {
+      if (options[i].equals(option)) {
+        index = i;
+        break;
+      }
+    }
+
+    if (index == -1) return; // Option not found
+    swapOption(index);
   }
 
   boolean handleClick() {
@@ -200,7 +214,7 @@ class Dropdown {
     if (index == 0) return false; // Option hasn't changed
 
     // Swap the currently selection option that's set at index 0
-    if (index > 0) setOption(index);
+    if (index > 0) swapOption(index);
     return true;
   }
 }
