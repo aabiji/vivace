@@ -23,6 +23,9 @@ class App {
   private String file;
   private String filename;
 
+  PFont titleFont;
+  PFont uiFont;
+
   App() {
     createKeyboard();
     // TODO: don't hardcode positions
@@ -35,8 +38,11 @@ class App {
     positionSlider = new Slider(95, 15, 750, 0, 0);
     instrumentDropdown = new Dropdown(870, 10, 110, 25, Instrument.Names);
 
-    loadButton = new Button("Load song", width / 2, 260, 150, 45);
-    resumeButton = new Button("Resume playback", width / 2, 340, 150, 45);
+    loadButton = new Button("Load song", width / 2 - 100, height / 1.75, 150, 45);
+    resumeButton = new Button("Resume playback", width / 2 + 100, height / 1.75, 150, 45);
+
+    titleFont = createFont("title.ttf", 128);
+    uiFont = createFont("ui.ttf", 128);
 
     drawingMenu = true;
     state = new JSONObject();
@@ -126,7 +132,7 @@ class App {
       UpcomingNote note = notes.get(i);
       if (note.hidden()) continue;
       if (!player.isPaused() || forceUpdate)
-        note.updatePosition(player.getPosition() * 1000.0);
+        note.updatePosition(positionSlider.getValue() * 1000.0);
       if (note.hittingKeyboard())
         pressedNotes.put(note.value, true);
       note.draw();
@@ -138,13 +144,28 @@ class App {
     }
   }
 
+  private void changePosition(boolean updatePlayer) {
+    float seconds = positionSlider.getValue();
+    if (updatePlayer)
+      player.setPosition(seconds);
+    for (UpcomingNote note : notes) {
+      note.updatePosition(seconds * 1000);
+    }
+  }
+
   private void updatePositionSlider() {
-    positionSlider.setValue(player.getPosition());
-    String filename = new File(file).getName();
-    String label = String.format("%s - %s", player.getPositionStr(), filename);
-    positionSlider.setLabel(label);
-    if (mousePressed)
+    String position = formatTime(positionSlider.getValue());
+    String duration = formatTime(player.getDuration());
+    String label = String.format("%s / %s - %s", position, duration, filename);
+
+    if (mousePressed) {
       positionSlider.handleDrag();
+      changePosition(false);
+    } else {
+      positionSlider.setValue(player.getPosition());
+    }
+
+    positionSlider.setLabel(label);
     positionSlider.draw();
   }
 
@@ -167,7 +188,12 @@ class App {
 
     if (drawingMenu) {
       fill(255);
-      drawText("Vivace", width / 2, height / 4, 35);
+      textFont(titleFont);
+      drawText("Vivace", width / 2, height / 3, 80);
+      textFont(uiFont);
+
+      drawText("Visualize piano songs!", width / 2, height / 2.15, 18);
+      drawText("(C) Abigail Adegbiji, 2025", width / 2, height - 50, 14);
 
       loadButton.draw();
       resumeButton.draw();
@@ -183,6 +209,8 @@ class App {
     drawControlPanel();
   }
 
+  // Technique taken from here:
+  // https://www.javatpoint.com/filedialog-java
   String openFileDialog() {
     Frame frame = new Frame("File Dialog");
     FileDialog dialog = new FileDialog(frame, "Pick a song", FileDialog.LOAD);
@@ -215,13 +243,8 @@ class App {
     if (toggleButton.handleClick())
       player.togglePause();
 
-    if (positionSlider.handleDrag()) {
-      float seconds = positionSlider.getValue();
-      player.setPosition(seconds);
-      for (UpcomingNote note : notes) {
-        note.updatePosition(seconds * 1000);
-      }
-    }
+    if (positionSlider.handleDrag())
+      changePosition(true);
 
     if (instrumentDropdown.handleClick()) {
       Instrument i = Instrument.valueOf(instrumentDropdown.currentOption());

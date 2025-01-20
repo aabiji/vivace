@@ -1,10 +1,3 @@
-
-void drawText(String str, float x, float y, int size) {
-  textSize(size);
-  float w = textWidth(str);
-  text(str, x - w / 2, y + size / 2);
-}
-
 // Slider UI component
 class Slider {
   private float x, y, lineWidth;
@@ -45,7 +38,7 @@ class Slider {
     float endX = map(value, 0.0, rangeEnd, 0.0, lineWidth);
     stroke(color(133, 133, 133));
     line(x, y, x + lineWidth, y);
-    stroke(color(0, 255, 0));
+    stroke(color(6, 214, 159));
     line(x, y, x + endX, y);
     drawText(label, x + textWidth(label) / 2, y + 15, 15);
 
@@ -77,7 +70,7 @@ class Button {
   private int iconIndex;
   private boolean hovering;
 
-  Button(PShape[] icons, int x, int y, int w, int h) {
+  Button(PShape[] icons, float x, float y, float w, float h) {
     size = new PVector(w, h);
     position = new PVector(x, y);
     this.icons = icons;
@@ -85,7 +78,7 @@ class Button {
     hovering = false;
   }
 
-  Button(String text, int x, int y, int w, int h) {
+  Button(String text, float x, float y, float w, float h) {
     size = new PVector(w, h);
     position = new PVector(x - w / 2, y - h / 2);
     this.text = text;
@@ -122,7 +115,13 @@ class Button {
   void draw() {
     setCursor();
     if (text != null) {
-      fill(mouseInside() ? color(41, 41, 41) : color(31, 31, 31));
+      if (mouseInside()) {
+        stroke(color(6, 214, 159));
+        fill(color(41, 41, 41));
+      } else {
+        fill(color(31, 31, 31));
+        stroke(color(31, 31, 31));
+      }
       rect(position.x, position.y, size.x, size.y);
       fill(255);
       drawText(text, position.x + size.x / 2, position.y + size.y / 2, 15);
@@ -182,9 +181,8 @@ class Dropdown {
     // Draw the options
     int count = menuOpened ? options.length : 1;
     for (int i = 0; i < count; i++) {
-      color bg = i == hoveredOption() ? color(51, 51, 51) : color(41, 41, 41);
+      fill(i == hoveredOption() ? color(51, 51, 51) : color(41, 41, 41));
       float y = position.y + size.y * i;
-      fill(bg);
       rect(position.x, y, size.x, size.y);
       fill(255);
       drawText(options[i], position.x + size.x / 2, y + size.y / 2, 15);

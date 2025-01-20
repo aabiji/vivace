@@ -102,7 +102,7 @@ class KeyboardNote extends Note {
    }
 
    void draw(boolean highlighted) {
-    c = highlighted ? color(0, 255, 0) : actualColor;
+    c = highlighted ? color(6, 214, 159) : actualColor;
     super.draw();
    }
 }

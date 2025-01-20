@@ -1,4 +1,10 @@
 
+void drawText(String str, float x, float y, int size) {
+  textSize(size);
+  float w = textWidth(str);
+  text(str, x - w / 2, y + size / 2);
+}
+
 // Convert a list of bytes into a long
 // Conversion is in big endian
 private long bytesToLong(byte[] data) {

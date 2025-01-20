@@ -33,6 +33,10 @@ private class TempoChange {
   }
 }
 
+// There articles were instrumental in figuring out how to build the class
+// https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/sound/midi/package-summary.html
+// https://www.geeksforgeeks.org/java-midi/
+// https://reintech.io/blog/java-midi-programming-creating-manipulating-midi-data
 class MidiPlayer {
   private Sequencer sequencer;
 
@@ -202,15 +206,6 @@ class MidiPlayer {
   // Get the playback position in seconds
   float getPosition() {
     return (sequencer.getMicrosecondPosition() / 1000000.0) - audioLatency;
-  }
-
-  // Format the playback position in a string
-  String getPositionStr() {
-    return String.format(
-      "%s / %s",
-      formatTime(getPosition()),
-      formatTime(getDuration())
-    );
   }
 
   // Set the playback position of the music
