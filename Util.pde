@@ -1,3 +1,4 @@
+import java.nio.ByteBuffer;
 
 void drawText(String str, float x, float y, int size) {
   textSize(size);
@@ -13,6 +14,15 @@ private long bytesToLong(byte[] data) {
     value = (value << 8) + (data[i] & 0xff);
   }
   return value;
+}
+
+public static byte[] longToBytes(long l) {
+    byte[] result = new byte[Long.BYTES];
+    for (int i = Long.BYTES - 1; i >= 0; i--) {
+        result[i] = (byte)(l & 0xFF);
+        l >>= Byte.SIZE;
+    }
+    return result;
 }
 
 // Format seconds into a string containing minutes and seconds

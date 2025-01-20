@@ -1,19 +1,13 @@
 /*
-Ressources:
-https://docs.oracle.com/en/java/javase/11/docs/api/java.desktop/javax/sound/midi/package-summary.html
-https://reintech.io/blog/java-midi-programming-creating-manipulating-midi-data
-https://docs.oracle.com/javase/tutorial/sound/SPI-providing-MIDI.html
-https://www.geeksforgeeks.org/java-midi/
-https://en.wikipedia.org/wiki/General_MIDI
-https://www.javatpoint.com/filedialog-java
-*/
-
-// TODO: create a readme and finish documentation
-
-/*
 User feedback:
 The user should be able to control the tempo
 */
+
+// TODO:
+// Create github releases:
+// Beta version 1 v1.0.0-beta -> b52946a79eae4f9747456919056ae2c94a5df47d
+// Beta version 2 v2.0.0-beta -> c937c413e40664e1858961f2c45a0752033ea504
+// Final version v1.0.0 ->
 
 App app;
 

@@ -57,7 +57,7 @@ class Slider {
     if (!xOnSlider || !yOnSlider) return false;
 
     float xpos = max(x, min(mouseX, x + lineWidth)); // Clamp to the slider bounds
-    value = map(xpos - x, 0, lineWidth, rangeStart, rangeEnd);
+    value = round(map(xpos - x, 0, lineWidth, rangeStart, rangeEnd));
     return true;
   }
 }

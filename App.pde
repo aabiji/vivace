@@ -1,15 +1,16 @@
 import java.awt.FileDialog;
 import java.awt.Frame;
-
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.text.DecimalFormat;
 
 class App {
-  MidiPlayer player;
+  private MidiPlayer player;
   private ArrayList<UpcomingNote> notes;
   private ArrayList<KeyboardNote> keyboard;
 
   private Slider positionSlider;
+  private Slider tempoSlider;
   private Button toggleButton;
   private Dropdown instrumentDropdown;
   private Button backButton;
@@ -28,14 +29,15 @@ class App {
 
   App() {
     createKeyboard();
-    // TODO: don't hardcode positions
+
     PShape[] icons = { loadShape("back.svg") };
     backButton = new Button(icons, 15, 15, 20, 20);
 
     PShape[] toggleIcons = { loadShape("play.svg"), loadShape("pause.svg") };
     toggleButton = new Button(toggleIcons, 50, 15, 20, 20);
 
-    positionSlider = new Slider(95, 15, 750, 0, 0);
+    positionSlider = new Slider(95, 15, 525, 0, 0);
+    tempoSlider = new Slider(650, 15, 150, 0, 200);
     instrumentDropdown = new Dropdown(870, 10, 110, 25, Instrument.Names);
 
     loadButton = new Button("Load song", width / 2 - 100, height / 1.75, 150, 45);
@@ -52,6 +54,7 @@ class App {
   void init(String path) {
     float position = 0;
     Instrument instrument = Instrument.Piano;
+    float tempo = -1;
     file = path;
 
     // Load previously stored state
@@ -67,9 +70,10 @@ class App {
         errorMessage = "You don't have a save file to load from";
         return;
       }
-      
+
       position = state.getFloat("position");
       instrument = Instrument.valueOf(state.getString("instrument"));
+      tempo = state.getFloat("tempo");
     }
 
     String extension = "";
@@ -93,6 +97,11 @@ class App {
     positionSlider.updateEnd(player.getDuration());
     positionSlider.setValue(position);
 
+    if (tempo != -1) {
+      tempoSlider.setValue(tempo);
+      player.setTempo(tempo);
+    }
+
     updateNotes(true);
     drawingMenu = false;
     cursor(ARROW);
@@ -102,7 +111,9 @@ class App {
     if (file == null) return; // Not loaded
     state.setString("instrument", player.getInstrument().name());
     state.setFloat("position", player.getPosition());
+    state.setFloat("tempo", player.getTempo());
     state.setString("file", file);
+    // TODO: create json file if it doesn't already exist
     saveJSONObject(state, "data/state.json");
   }
 
@@ -158,8 +169,7 @@ class App {
     String duration = formatTime(player.getDuration());
     String label = String.format("%s / %s - %s", position, duration, filename);
 
-    if (mousePressed) {
-      positionSlider.handleDrag();
+    if (mousePressed && positionSlider.handleDrag()) {
       changePosition(false);
     } else {
       positionSlider.setValue(player.getPosition());
@@ -167,6 +177,21 @@ class App {
 
     positionSlider.setLabel(label);
     positionSlider.draw();
+  }
+
+  void updateTempoSlider() {
+    float tempo = player.getTempo();
+    DecimalFormat format = new DecimalFormat("0.#");
+    String label = String.format("%s beats per minute", format.format(tempo));
+
+    if (mousePressed && tempoSlider.handleDrag()) {
+      player.setTempo(tempoSlider.getValue());
+    } else {
+      tempoSlider.setValue(tempo);
+    }
+
+    tempoSlider.setLabel(label);
+    tempoSlider.draw();
   }
 
   void drawControlPanel() {
@@ -180,6 +205,7 @@ class App {
 
     backButton.draw();
     instrumentDropdown.draw();
+    updateTempoSlider();
     updatePositionSlider();
   }
 

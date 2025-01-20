@@ -26,10 +26,12 @@ enum Instrument {
 private class TempoChange {
   long tick; // When it changed
   float millisecondsPerTick; // New milliseconds per tick
+  MetaMessage message;
 
-  TempoChange(long tick, float millisecondsPerTick) {
+  TempoChange(MetaMessage message, long tick, float millisecondsPerTick) {
     this.tick = tick;
     this.millisecondsPerTick = millisecondsPerTick;
+    this.message = message;
   }
 }
 
@@ -73,7 +75,7 @@ class MidiPlayer {
             long microsecondsPerQuarterNote = bytesToLong(mm.getData());
             float beatsPerMinute = 60000000.0 / (float)microsecondsPerQuarterNote;
             float millisecondsPerTick = 60000.0 / (beatsPerMinute * ticksPerQuarterNote);
-            tempoChanges.add(new TempoChange(timestamp, millisecondsPerTick));
+            tempoChanges.add(new TempoChange(mm, timestamp, millisecondsPerTick));
           }
         }
 
@@ -238,5 +240,19 @@ class MidiPlayer {
       setPosition(0);
       setPosition(previous);
     } catch (InvalidMidiDataException  e) {}
+  }
+
+  float getTempo() {
+    return floor(sequencer.getTempoInBPM());
+  }
+
+  void setTempo(float bpm) {
+    sequencer.setTempoInBPM(bpm);
+    for (TempoChange change : tempoChanges) {
+      MetaMessage mm = change.message;
+      try {
+        mm.setMessage(0x51, longToBytes((long)sequencer.getTempoInMPQ()), 3);
+      } catch (Exception e) {}
+    }
   }
 }
