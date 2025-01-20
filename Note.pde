@@ -65,14 +65,11 @@ class UpcomingNote extends Note {
     // Adjust the height based on the duration of the note
     size.y = (duration / 1000.0) * pixelsPerSecond;
 
-    updatePosition(0);
-    getColor();
-  }
+    // The color should fall on a gradient between blue and red
+    float h = map(position.x, 0, width, 150, 315);
+    c = hslToRGB(ceil(h), 1, 0.5);
 
-  private void getColor() {
-    float x = map(position.x, 0, width, 0, 255);
-    float y = map(position.y, 0, width, 0, 255);
-    c = color(128, y, x);
+    updatePosition(0);
   }
 
   // Set the y position of the note based on how far

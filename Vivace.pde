@@ -15,10 +15,7 @@ User feedback:
 The purpose of the program was confusing, the main menu should make it more obvious.
 “Wasn’t sure if it was a game or teaching you the song”
 
-
 The main menu and  the ui elements should look nicer
-
-The user should be able to choose different colors for the notes
 
 The user should be able to control the tempo
 */

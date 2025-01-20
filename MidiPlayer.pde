@@ -33,20 +33,6 @@ private class TempoChange {
   }
 }
 
-private long bytesToLong(byte[] data) {
-  long value = 0;
-  for (int i = 0; i < data.length; i++) {
-    value = (value << 8) + (data[i] & 0xff);
-  }
-  return value;
-}
-
-String formatTime(float seconds) {
-  int minutes = seconds > 0 ? floor(seconds / 60) : 0;
-  seconds = seconds > 0 ? seconds - minutes * 60 : 0;
-  return String.format("%02d:%02d", minutes, (int)seconds);
-}
-
 class MidiPlayer {
   private Sequencer sequencer;
 
