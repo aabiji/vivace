@@ -31,7 +31,7 @@ class App {
     instrumentDropdown = new Dropdown(870, 10, 110, 25, Instrument.Names);
 
     loadButton = new Button("Load song", width / 2 - 100, height / 1.75, 150, 45);
-    resumeButton = new Button("Resume playback", width / 2 + 100, height / 1.75, 150, 45);
+    resumeButton = new Button("Resume song", width / 2 + 100, height / 1.75, 150, 45);
 
     titleFont = createFont("title.ttf", 128);
     uiFont = createFont("ui.ttf", 128);
@@ -55,7 +55,7 @@ class App {
 
   // Save info about the currently playing song to a json file
   void saveState() {
-    if (player == null) return;
+    if (player == null || player.getInstrument() == null) return;
     JSONObject json = new JSONObject();
     json.setString("instrument", player.getInstrument().name());
     json.setFloat("position", player.getPosition());
@@ -74,6 +74,10 @@ class App {
     player = new MidiPlayer();
     errorMessage = player.load(file);
     if (errorMessage != null) return;
+    if (player.getDuration() == 0) {
+      errorMessage = "Empty midi file";
+      return;
+    }
 
     notes = player.getNotes();
     player.setPosition(position);
