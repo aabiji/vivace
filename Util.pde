@@ -1,28 +1,32 @@
-import java.nio.ByteBuffer;
+import java.awt.FileDialog;
+import java.awt.Frame;
 
-void drawText(String str, float x, float y, int size) {
-  textSize(size);
-  float w = textWidth(str);
-  text(str, x - w / 2, y + size / 2);
+// Allow the user to select a file using the OS's file dialog.
+// Technique taken from here:
+// https://www.javatpoint.com/filedialog-java
+File openFileDialog() {
+  Frame frame = new Frame("File Dialog");
+  FileDialog dialog = new FileDialog(frame, "Pick a song", FileDialog.LOAD);
+
+  dialog.setFile("*.mid");
+  dialog.setDirectory(sketchPath() + "/music");
+  dialog.setVisible(true);
+
+  String file = dialog.getFile();
+  return file != null ? new File(dialog.getDirectory() + file) : null;
 }
 
-// Convert a list of bytes into a long
-// Conversion is in big endian
-private long bytesToLong(byte[] data) {
-  long value = 0;
-  for (int i = 0; i < data.length; i++) {
-    value = (value << 8) + (data[i] & 0xff);
-  }
-  return value;
-}
+// Return true if the file is a valid MIDI file
+boolean validMidiFile(File file) {
+  if (!file.exists() || file.isDirectory())
+    return false;
 
-public static byte[] longToBytes(long l) {
-    byte[] result = new byte[Long.BYTES];
-    for (int i = Long.BYTES - 1; i >= 0; i--) {
-        result[i] = (byte)(l & 0xFF);
-        l >>= Byte.SIZE;
-    }
-    return result;
+  String extension = "";
+  String path = file.getAbsolutePath();
+  int i = path.lastIndexOf(".");
+  if (i > 0)
+    extension = path.substring(i + 1);
+  return extension.equals("mid");
 }
 
 // Format seconds into a string containing minutes and seconds
@@ -30,6 +34,12 @@ String formatTime(float seconds) {
   int minutes = seconds > 0 ? floor(seconds / 60) : 0;
   seconds = seconds > 0 ? seconds - minutes * 60 : 0;
   return String.format("%02d:%02d", minutes, (int)seconds);
+}
+
+void drawText(String str, float x, float y, int size) {
+  textSize(size);
+  float w = textWidth(str);
+  text(str, x - w / 2, y + size / 2);
 }
 
 // Convert HSL to RGB where Hue is between 0 and 360,
@@ -49,4 +59,15 @@ color hslToRGB(float h, float s, float l) {
   }
 
   return color(values[0], values[1], values[2]);
+}
+
+// Convert a list of bytes into a long. Conversion is in big endian.
+// Technique taken from here:
+// https://stackoverflow.com/questions/1026761/how-to-convert-a-byte-array-to-its-numeric-value-java
+private long bytesToLong(byte[] data) {
+  long value = 0;
+  for (int i = 0; i < data.length; i++) {
+    value = (value << 8) + (data[i] & 0xff);
+  }
+  return value;
 }

@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.Comparator;
 
 // Custom comparator that puts white keys ahead of black keys
@@ -51,6 +50,7 @@ class Note {
   }
 }
 
+// A note that falling down the screen
 class UpcomingNote extends Note {
   // Time when the note is first pressed down, In milliseconds
   private float start;
@@ -86,11 +86,13 @@ class UpcomingNote extends Note {
     return startY >= position.y && startY <= position.y + size.y;
   }
 
+  // Return true if it's below the piano keyboard
   boolean hidden() {
     return position.y >= startY;
   }
 }
 
+// A note that part of the piano keyboard
 class KeyboardNote extends Note {
   color actualColor;
 

@@ -1,16 +1,13 @@
-import java.awt.FileDialog;
-import java.awt.Frame;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.text.DecimalFormat;
 
 class App {
+  private File file;
   private MidiPlayer player;
   private ArrayList<UpcomingNote> notes;
   private ArrayList<KeyboardNote> keyboard;
 
   private Slider positionSlider;
-  private Slider tempoSlider;
   private Button toggleButton;
   private Dropdown instrumentDropdown;
   private Button backButton;
@@ -20,24 +17,17 @@ class App {
   private String errorMessage;
   private boolean drawingMenu;
 
-  private JSONObject state;
-  private String file;
-  private String filename;
-
-  PFont titleFont;
-  PFont uiFont;
+  private PFont titleFont;
+  private PFont uiFont;
 
   App() {
-    createKeyboard();
-
     PShape[] icons = { loadShape("back.svg") };
     backButton = new Button(icons, 15, 15, 20, 20);
 
     PShape[] toggleIcons = { loadShape("play.svg"), loadShape("pause.svg") };
     toggleButton = new Button(toggleIcons, 50, 15, 20, 20);
 
-    positionSlider = new Slider(95, 15, 525, 0, 0);
-    tempoSlider = new Slider(650, 15, 150, 0, 200);
+    positionSlider = new Slider(95, 15, 750, 0, 0);
     instrumentDropdown = new Dropdown(870, 10, 110, 25, Instrument.Names);
 
     loadButton = new Button("Load song", width / 2 - 100, height / 1.75, 150, 45);
@@ -47,74 +37,55 @@ class App {
     uiFont = createFont("ui.ttf", 128);
 
     drawingMenu = true;
-    state = new JSONObject();
+    createKeyboard();
+  }
+
+  void loadState() {
+    JSONObject json = loadJSONObject("data/state.json");
+    if (json == null) {
+      errorMessage = "Have no previous state. Must load a new song.";
+      return;
+    }
+
+    File previous = new File(json.getString("file"));
+    float position = json.getFloat("position");
+    Instrument instrument = Instrument.valueOf(json.getString("instrument"));
+    initialize(previous, instrument, position);
+  }
+
+  // Save info about the currently playing song to a json file
+  void saveState() {
+    if (player == null) return;
+    JSONObject json = new JSONObject();
+    json.setString("instrument", player.getInstrument().name());
+    json.setFloat("position", player.getPosition());
+    json.setString("file", file.getAbsolutePath());
+    saveJSONObject(json, "data/state.json");
   }
 
   // Load the midi file. To load previous state, set file to null
-  void init(String path) {
-    float position = 0;
-    Instrument instrument = Instrument.Piano;
-    float tempo = -1;
-    file = path;
-
-    // Load previously stored state
-    if (path == null) {
-      state = loadJSONObject("data/state.json");
-      if (state == null) {
-        errorMessage = "Have no previous state. Must load a new song.";
-        return;
-      }
-
-      file = state.getString("file");
-      if (file.length() == 0) {
-        errorMessage = "You don't have a save file to load from";
-        return;
-      }
-
-      position = state.getFloat("position");
-      instrument = Instrument.valueOf(state.getString("instrument"));
-      tempo = state.getFloat("tempo");
-    }
-
-    String extension = "";
-    int i = file.lastIndexOf(".");
-    if (i > 0) extension = file.substring(i + 1);
-    if (!extension.equals("mid")) {
+  void initialize(File input, Instrument instrument, float position) {
+    file = input;
+    if (!validMidiFile(file)) {
       errorMessage = "Input file must be a midi file";
       return;
     }
-    filename = new File(file).getName();
 
     player = new MidiPlayer();
     errorMessage = player.load(file);
     if (errorMessage != null) return;
 
     notes = player.getNotes();
-    player.setInstrument(instrument);
     player.setPosition(position);
-    instrumentDropdown.setOption(instrument.toString());
-
     positionSlider.updateEnd(player.getDuration());
     positionSlider.setValue(position);
 
-    if (tempo != -1) {
-      tempoSlider.setValue(tempo);
-      player.setTempo(tempo);
-    }
+    player.setInstrument(instrument);
+    instrumentDropdown.setOption(instrument.toString());
 
     updateNotes(true);
-    drawingMenu = false;
     cursor(ARROW);
-  }
-
-  void saveState() {
-    if (file == null) return; // Not loaded
-    state.setString("instrument", player.getInstrument().name());
-    state.setFloat("position", player.getPosition());
-    state.setFloat("tempo", player.getTempo());
-    state.setString("file", file);
-    // TODO: create json file if it doesn't already exist
-    saveJSONObject(state, "data/state.json");
+    drawingMenu = false;
   }
 
   private void createKeyboard() {
@@ -136,6 +107,8 @@ class App {
       x += octaveWidth;
     }
 
+    // Map a note to whether it's been pressed or not. The boolean
+    // doesn't really matter, since we're just using the hashmap for lookup.
     HashMap<Integer, Boolean> pressedNotes = new HashMap<Integer, Boolean>();
 
     // Draw all the notes
@@ -155,6 +128,8 @@ class App {
     }
   }
 
+  // Update the playback position and the positions of the upcoming notes
+  // based on the the value of the position slider
   private void changePosition(boolean updatePlayer) {
     float seconds = positionSlider.getValue();
     if (updatePlayer)
@@ -164,10 +139,12 @@ class App {
     }
   }
 
+  // Draw the slider that controls the playback position and
+  // handle updating the positions of the upcoming notes when it's dragged
   private void updatePositionSlider() {
     String position = formatTime(positionSlider.getValue());
     String duration = formatTime(player.getDuration());
-    String label = String.format("%s / %s - %s", position, duration, filename);
+    String label = String.format("%s / %s - %s", position, duration, file.getName());
 
     if (mousePressed && positionSlider.handleDrag()) {
       changePosition(false);
@@ -177,21 +154,6 @@ class App {
 
     positionSlider.setLabel(label);
     positionSlider.draw();
-  }
-
-  void updateTempoSlider() {
-    float tempo = player.getTempo();
-    DecimalFormat format = new DecimalFormat("0.#");
-    String label = String.format("%s beats per minute", format.format(tempo));
-
-    if (mousePressed && tempoSlider.handleDrag()) {
-      player.setTempo(tempoSlider.getValue());
-    } else {
-      tempoSlider.setValue(tempo);
-    }
-
-    tempoSlider.setLabel(label);
-    tempoSlider.draw();
   }
 
   void drawControlPanel() {
@@ -205,59 +167,49 @@ class App {
 
     backButton.draw();
     instrumentDropdown.draw();
-    updateTempoSlider();
     updatePositionSlider();
+  }
+
+  void drawMainMenu() {
+    fill(255);
+    textFont(titleFont);
+    drawText("Vivace", width / 2, height / 3, 80);
+    textFont(uiFont);
+
+    drawText("Visualize piano songs!", width / 2, height / 2.15, 18);
+    drawText("(C) Abigail Adegbiji, 2025", width / 2, height - 50, 14);
+
+    loadButton.draw();
+    resumeButton.draw();
+
+    if (errorMessage != null) {
+      fill(color(255, 0, 0));
+      drawText(errorMessage, width / 2, height / 1.5, 20);
+    }
   }
 
   void draw() {
     background(color(15, 15, 15));
-
     if (drawingMenu) {
-      fill(255);
-      textFont(titleFont);
-      drawText("Vivace", width / 2, height / 3, 80);
-      textFont(uiFont);
-
-      drawText("Visualize piano songs!", width / 2, height / 2.15, 18);
-      drawText("(C) Abigail Adegbiji, 2025", width / 2, height - 50, 14);
-
-      loadButton.draw();
-      resumeButton.draw();
-
-      if (errorMessage != null) {
-        fill(color(255, 0, 0));
-        drawText(errorMessage, width / 2, 400, 20);
-      }
-      return;
+      drawMainMenu();
+    } else {
+      updateNotes(false);
+      drawControlPanel();
     }
-
-    updateNotes(false);
-    drawControlPanel();
   }
 
-  // Technique taken from here:
-  // https://www.javatpoint.com/filedialog-java
-  String openFileDialog() {
-    Frame frame = new Frame("File Dialog");
-    FileDialog dialog = new FileDialog(frame, "Pick a song", FileDialog.LOAD);
-
-    dialog.setFile("*.mid");
-    dialog.setDirectory(sketchPath() + "/music");
-    dialog.setVisible(true);
-
-    String file = dialog.getFile();
-    return file != null ? dialog.getDirectory() + file : null;
-  }
-
+  // Do various things when the ui elements are clicked
   void handleClick() {
     if (loadButton.handleClick()) {
-      String path = openFileDialog();
-      if (path != null) init(path);
+      File selected = openFileDialog();
+      if (selected != null)
+        initialize(selected, Instrument.Piano, 0.0);
     }
 
     if (resumeButton.handleClick())
-      init(null);
+      loadState();
 
+    // Go back to the main menu
     if (backButton.handleClick()) {
       drawingMenu = true;
       if (!player.isPaused())
@@ -269,6 +221,7 @@ class App {
     if (toggleButton.handleClick())
       player.togglePause();
 
+    // Actually change the position when we've released the mouse
     if (positionSlider.handleDrag())
       changePosition(true);
 

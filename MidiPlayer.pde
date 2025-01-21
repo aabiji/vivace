@@ -1,5 +1,4 @@
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.BufferedInputStream;
@@ -26,12 +25,10 @@ enum Instrument {
 private class TempoChange {
   long tick; // When it changed
   float millisecondsPerTick; // New milliseconds per tick
-  MetaMessage message;
 
-  TempoChange(MetaMessage message, long tick, float millisecondsPerTick) {
+  TempoChange(long tick, float millisecondsPerTick) {
     this.tick = tick;
     this.millisecondsPerTick = millisecondsPerTick;
-    this.message = message;
   }
 }
 
@@ -75,7 +72,7 @@ class MidiPlayer {
             long microsecondsPerQuarterNote = bytesToLong(mm.getData());
             float beatsPerMinute = 60000000.0 / (float)microsecondsPerQuarterNote;
             float millisecondsPerTick = 60000.0 / (beatsPerMinute * ticksPerQuarterNote);
-            tempoChanges.add(new TempoChange(mm, timestamp, millisecondsPerTick));
+            tempoChanges.add(new TempoChange(timestamp, millisecondsPerTick));
           }
         }
 
@@ -172,19 +169,18 @@ class MidiPlayer {
 
   // Load the midi file. Return a string containing the error
   // message on error, and null otherwise
-  String load(String path) {
+  String load(File file) {
     try {
       sequencer = MidiSystem.getSequencer();
       sequencer.open();
 
-      InputStream stream = new BufferedInputStream(new FileInputStream(new File(path)));
+      InputStream stream = new BufferedInputStream(new FileInputStream(file));
       Sequence sequence = MidiSystem.getSequence(stream);
       sequencer.setSequence(sequence);
 
       ticksPerQuarterNote = sequence.getResolution();
       getChanges(sequence);
       extractNotes(sequence);
-      setInstrument(Instrument.Piano);
     } catch (Exception exception) {
       return exception.getMessage();
     }
@@ -232,27 +228,15 @@ class MidiPlayer {
     instrument = newInstrument;
 
     try {
+      // Make each instrument change event use the new instrument
       for (ShortMessage sm : instrumentChanges) {
         sm.setMessage(sm.getCommand(), sm.getChannel(), instrument.index, 0);
       }
 
+      // Neat trick to make the sequencer continue playback with the new instrument
       float previous = getPosition();
       setPosition(0);
       setPosition(previous);
     } catch (InvalidMidiDataException  e) {}
-  }
-
-  float getTempo() {
-    return floor(sequencer.getTempoInBPM());
-  }
-
-  void setTempo(float bpm) {
-    sequencer.setTempoInBPM(bpm);
-    for (TempoChange change : tempoChanges) {
-      MetaMessage mm = change.message;
-      try {
-        mm.setMessage(0x51, longToBytes((long)sequencer.getTempoInMPQ()), 3);
-      } catch (Exception e) {}
-    }
   }
 }

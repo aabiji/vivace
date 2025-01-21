@@ -70,6 +70,7 @@ class Button {
   private int iconIndex;
   private boolean hovering;
 
+  // A button that uses an icon 
   Button(PShape[] icons, float x, float y, float w, float h) {
     size = new PVector(w, h);
     position = new PVector(x, y);
@@ -78,6 +79,7 @@ class Button {
     hovering = false;
   }
 
+  // A button that uses text
   Button(String text, float x, float y, float w, float h) {
     size = new PVector(w, h);
     position = new PVector(x - w / 2, y - h / 2);
@@ -115,6 +117,7 @@ class Button {
   void draw() {
     setCursor();
     if (text != null) {
+      // Change color based on whether the mouse is hovering the button
       if (mouseInside()) {
         stroke(color(6, 214, 159));
         fill(color(41, 41, 41));
@@ -131,6 +134,7 @@ class Button {
   }
 }
 
+// Basic drop down menu
 class Dropdown {
   private PVector position;
   private PVector size;
@@ -178,6 +182,7 @@ class Dropdown {
     setCursor();
     stroke(color(61, 61, 61));
     textSize(15);
+
     // Draw the options
     int count = menuOpened ? options.length : 1;
     for (int i = 0; i < count; i++) {
@@ -192,6 +197,7 @@ class Dropdown {
   String currentOption() { return options[0]; }
 
   void setOption(String option) {
+    // Find the index of the option
     int index = -1;
     for (int i = 0; i < options.length; i++) {
       if (options[i].equals(option)) {

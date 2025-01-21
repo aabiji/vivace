@@ -1,13 +1,16 @@
 /*
-User feedback:
-The user should be able to control the tempo
-*/
+Vivace
+------
+Abigail Adegbiji
+January 20, 2025
 
-// TODO:
-// Create github releases:
-// Beta version 1 v1.0.0-beta -> b52946a79eae4f9747456919056ae2c94a5df47d
-// Beta version 2 v2.0.0-beta -> c937c413e40664e1858961f2c45a0752033ea504
-// Final version v1.0.0 ->
+Vivace is an app that visualizes piano songs, showing
+the notes falling down the screen as the song plays. There
+are no keybindings or anything like that, just load a midi
+file, interact with the ui and watch the visualization.
+
+I hope you enjoy this as much as I enjoyed creating it.
+*/
 
 App app;
 
